@@ -110,15 +110,18 @@ struct BatchConfirmationView: View {
             isPresented: $showPrintChoice,
             titleVisibility: .visible
         ) {
-            Button("写真付き印刷") {
+            Button("写真付き印刷（A4）") {
                 printBatchWithPhotos()
             }
-            Button("ジャーナル印刷（リスト）") {
-                printBatchJournal()
+            Button("ジャーナル印刷（A4）") {
+                printBatchJournal(layout: .a4)
+            }
+            Button("ジャーナル印刷（レシート）") {
+                printBatchJournal(layout: .receipt58mm)
             }
             Button("キャンセル", role: .cancel) {}
         } message: {
-            Text("写真付き: 写真・薬品名・秤量を一覧印刷\nジャーナル: 日付・撮影ID・薬品名・秤量のリスト印刷")
+            Text("写真付き: 写真・薬品名・秤量を一覧印刷\nジャーナルA4: テーブル形式\nジャーナルレシート: CT-S251等58mm幅")
         }
     }
 
@@ -168,7 +171,7 @@ struct BatchConfirmationView: View {
 
     // MARK: - Batch Printing (Journal)
 
-    private func printBatchJournal() {
+    private func printBatchJournal(layout: PrintHelper.PageLayout = .a4) {
         isPrinting = true
 
         // Save to history first so each item gets a scanID
@@ -176,10 +179,9 @@ struct BatchConfirmationView: View {
 
         // Load recent records to get the scanIDs just assigned
         let allRecords = HistoryStore.loadAll()
-        // Match by taking the most recent N records (just saved)
         let recentRecords = Array(allRecords.prefix(viewModel.scannedItems.count))
 
-        guard let journalImage = PrintHelper.journalImage(records: recentRecords) else {
+        guard let journalImage = PrintHelper.journalImage(records: recentRecords, layout: layout) else {
             printError = "ジャーナル印刷用レイアウトの生成に失敗しました。"
             isPrinting = false
             return
