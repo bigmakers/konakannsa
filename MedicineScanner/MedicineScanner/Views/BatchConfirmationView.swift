@@ -133,6 +133,7 @@ struct BatchConfirmationView: View {
             if let error {
                 printError = error.localizedDescription
             } else if completed {
+                HistoryStore.saveBatch(viewModel.scannedItems)
                 viewModel.resetAll()
                 dismiss()
             }

@@ -38,22 +38,43 @@ struct ConfirmationView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
 
-                // Weight manual input (large)
-                HStack(spacing: 12) {
+                // Weight display
+                HStack(spacing: 8) {
                     Image(systemName: "scalemass.fill")
-                        .font(.title)
+                        .font(.title2)
                         .foregroundStyle(.secondary)
-                    TextField("数値", text: $weight)
-                        .font(.system(size: 48, weight: .bold, design: .rounded).monospacedDigit())
-                        .textFieldStyle(.roundedBorder)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: 220)
+                    Text(weight.isEmpty ? "0" : weight)
+                        .font(.system(size: 44, weight: .bold, design: .rounded).monospacedDigit())
+                        .foregroundStyle(weight.isEmpty ? .secondary : .primary)
                     Text("g")
-                        .font(.title)
+                        .font(.title2)
                         .foregroundStyle(.secondary)
                 }
-                .padding(.horizontal)
+
+                // Inline number buttons (horizontal)
+                HStack(spacing: 6) {
+                    ForEach(["1","2","3","4","5","6","7","8","9","0","."], id: \.self) { key in
+                        Button {
+                            tapKey(key)
+                        } label: {
+                            Text(key)
+                                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                                .frame(width: 28, height: 40)
+                                .background(Color(.systemGray5), in: RoundedRectangle(cornerRadius: 8))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    Button {
+                        if !weight.isEmpty { weight.removeLast() }
+                    } label: {
+                        Image(systemName: "delete.backward.fill")
+                            .font(.system(size: 18))
+                            .frame(width: 28, height: 40)
+                            .background(Color(.systemGray4), in: RoundedRectangle(cornerRadius: 8))
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 12)
 
                 // Photo + retake button
                 ZStack(alignment: .bottomTrailing) {
@@ -151,6 +172,16 @@ struct ConfirmationView: View {
         }
     }
 
+    // MARK: - Number Input
+
+    private func tapKey(_ key: String) {
+        if key == "." {
+            if weight.contains(".") { return }
+            if weight.isEmpty { weight = "0" }
+        }
+        weight.append(key)
+    }
+
     // MARK: - Printing
 
     private func printCombinedLayout() {
@@ -181,6 +212,12 @@ struct ConfirmationView: View {
             if let error {
                 printError = error.localizedDescription
             } else if completed {
+                HistoryStore.save(
+                    barcode: "",
+                    medicineName: medicineName,
+                    weight: weight,
+                    photo: photo
+                )
                 dismiss()
                 onDone()
             }

@@ -133,6 +133,13 @@ struct ScannerView: View {
             .navigationTitle("お薬スキャナー")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink {
+                        HistoryView()
+                    } label: {
+                        Image(systemName: "clock.arrow.circlepath")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
                         MedicineListView()
