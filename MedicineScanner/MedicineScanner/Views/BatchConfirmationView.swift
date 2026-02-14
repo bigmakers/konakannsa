@@ -9,6 +9,7 @@ struct BatchConfirmationView: View {
 
     @State private var isPrinting = false
     @State private var printError: String?
+    @State private var showPrintChoice = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -59,7 +60,7 @@ struct BatchConfirmationView: View {
                 Divider()
 
                 Button {
-                    printBatchLayout()
+                    showPrintChoice = true
                 } label: {
                     Label(
                         "まとめて印刷（\(viewModel.scannedItems.count)件）",
@@ -104,11 +105,26 @@ struct BatchConfirmationView: View {
         } message: {
             Text(printError ?? "")
         }
+        .confirmationDialog(
+            "印刷形式を選択",
+            isPresented: $showPrintChoice,
+            titleVisibility: .visible
+        ) {
+            Button("写真付き印刷") {
+                printBatchWithPhotos()
+            }
+            Button("ジャーナル印刷（リスト）") {
+                printBatchJournal()
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("写真付き: 写真・薬品名・秤量を一覧印刷\nジャーナル: 日付・撮影ID・薬品名・秤量のリスト印刷")
+        }
     }
 
-    // MARK: - Batch Printing
+    // MARK: - Batch Printing (Photos)
 
-    private func printBatchLayout() {
+    private func printBatchWithPhotos() {
         isPrinting = true
 
         guard let printableImage = PrintHelper.compositeBatchImage(
@@ -134,6 +150,44 @@ struct BatchConfirmationView: View {
                 printError = error.localizedDescription
             } else if completed {
                 HistoryStore.saveBatch(viewModel.scannedItems)
+                viewModel.resetAll()
+                dismiss()
+            }
+        }
+    }
+
+    // MARK: - Batch Printing (Journal)
+
+    private func printBatchJournal() {
+        isPrinting = true
+
+        // Save to history first so each item gets a scanID
+        HistoryStore.saveBatch(viewModel.scannedItems)
+
+        // Load recent records to get the scanIDs just assigned
+        let allRecords = HistoryStore.loadAll()
+        // Match by taking the most recent N records (just saved)
+        let recentRecords = Array(allRecords.prefix(viewModel.scannedItems.count))
+
+        guard let journalImage = PrintHelper.journalImage(records: recentRecords) else {
+            printError = "ジャーナル印刷用レイアウトの生成に失敗しました。"
+            isPrinting = false
+            return
+        }
+
+        let printController = UIPrintInteractionController.shared
+        let printInfo = UIPrintInfo.printInfo()
+        printInfo.outputType = .general
+        printInfo.jobName = "秤量ジャーナル（\(viewModel.scannedItems.count)件）"
+
+        printController.printInfo = printInfo
+        printController.printingItem = journalImage
+
+        printController.present(animated: true) { _, completed, error in
+            isPrinting = false
+            if let error {
+                printError = error.localizedDescription
+            } else if completed {
                 viewModel.resetAll()
                 dismiss()
             }
