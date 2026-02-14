@@ -18,6 +18,7 @@
 		A1000010 /* MedicineListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000012 /* MedicineListView.swift */; };
 		A1000011 /* HistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000013 /* HistoryStore.swift */; };
 		A1000012 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000014 /* HistoryView.swift */; };
+		A1000013 /* ReceiptPrinterService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000015 /* ReceiptPrinterService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,6 +35,7 @@
 		A2000012 /* MedicineListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicineListView.swift; sourceTree = "<group>"; };
 		A2000013 /* HistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryStore.swift; sourceTree = "<group>"; };
 		A2000014 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		A2000015 /* ReceiptPrinterService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptPrinterService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -94,6 +96,7 @@
 			children = (
 				A2000005 /* MedicineService.swift */,
 				A2000013 /* HistoryStore.swift */,
+				A2000015 /* ReceiptPrinterService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -194,6 +197,7 @@
 				A1000010 /* MedicineListView.swift in Sources */,
 				A1000011 /* HistoryStore.swift in Sources */,
 				A1000012 /* HistoryView.swift in Sources */,
+				A1000013 /* ReceiptPrinterService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
