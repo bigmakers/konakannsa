@@ -14,7 +14,11 @@ struct HistoryView: View {
     @State private var foundRecord: HistoryRecord?
     @State private var showPhotoDetail = false
     @State private var searchNotFound = false
-    @State private var showJournalChoice = false
+    @AppStorage("journalLayout") private var journalLayout: String = "a4"
+
+    private var selectedJournalLayout: PrintHelper.PageLayout {
+        journalLayout == "receipt" ? .receipt58mm : .a4
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -87,7 +91,7 @@ struct HistoryView: View {
                 HStack(spacing: 12) {
                     if !records.isEmpty {
                         Button {
-                            showJournalChoice = true
+                            printJournal(layout: selectedJournalLayout)
                         } label: {
                             Image(systemName: "doc.text")
                         }
@@ -121,11 +125,6 @@ struct HistoryView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text("撮影ID「\(searchText)」に一致する記録はありません。")
-        }
-        .confirmationDialog("ジャーナル印刷", isPresented: $showJournalChoice, titleVisibility: .visible) {
-            Button("A4で印刷") { printJournal(layout: .a4) }
-            Button("レシートで印刷（58mm）") { printJournal(layout: .receipt58mm) }
-            Button("キャンセル", role: .cancel) {}
         }
         .sheet(isPresented: $showPhotoDetail) {
             if let record = foundRecord {

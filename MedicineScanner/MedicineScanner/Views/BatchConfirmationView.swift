@@ -5,11 +5,16 @@ import SwiftUI
 struct BatchConfirmationView: View {
     @ObservedObject var viewModel: ScannerViewModel
     @AppStorage("isMonochrome") private var isMonochrome = false
+    @AppStorage("journalLayout") private var journalLayout: String = "a4"
     @Environment(\.dismiss) private var dismiss
 
     @State private var isPrinting = false
     @State private var printError: String?
     @State private var showPrintChoice = false
+
+    private var selectedJournalLayout: PrintHelper.PageLayout {
+        journalLayout == "receipt" ? .receipt58mm : .a4
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -110,18 +115,15 @@ struct BatchConfirmationView: View {
             isPresented: $showPrintChoice,
             titleVisibility: .visible
         ) {
-            Button("写真付き印刷（A4）") {
+            Button("写真付き印刷") {
                 printBatchWithPhotos()
             }
-            Button("ジャーナル印刷（A4）") {
-                printBatchJournal(layout: .a4)
-            }
-            Button("ジャーナル印刷（レシート）") {
-                printBatchJournal(layout: .receipt58mm)
+            Button("ジャーナル印刷") {
+                printBatchJournal(layout: selectedJournalLayout)
             }
             Button("キャンセル", role: .cancel) {}
         } message: {
-            Text("写真付き: 写真・薬品名・秤量を一覧印刷\nジャーナルA4: テーブル形式\nジャーナルレシート: CT-S251等58mm幅")
+            Text("写真付き: 写真・薬品名・秤量を一覧印刷\nジャーナル: 日付・撮影ID・薬品名・秤量のリスト（\(journalLayout == "receipt" ? "レシート" : "A4")）")
         }
     }
 

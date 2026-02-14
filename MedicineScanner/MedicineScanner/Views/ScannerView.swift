@@ -210,6 +210,7 @@ struct ScannerView: View {
 
 struct SettingsSheet: View {
     @Binding var cameraZoom: Double
+    @AppStorage("journalLayout") private var journalLayout: String = "a4"
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -221,11 +222,17 @@ struct SettingsSheet: View {
                         Text("2x").tag(2.0)
                     }
                     .pickerStyle(.segmented)
-                }
-                Section {
+
                     Text("ズーム倍率はアプリを再起動すると反映されます。")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+                Section("ジャーナル印刷") {
+                    Picker("用紙サイズ", selection: $journalLayout) {
+                        Text("A4").tag("a4")
+                        Text("レシート（58mm）").tag("receipt")
+                    }
+                    .pickerStyle(.segmented)
                 }
             }
             .navigationTitle("設定")
