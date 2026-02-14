@@ -73,21 +73,20 @@ struct ScannerView: View {
                             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
                             .padding(.bottom, 8)
 
-                        // Take Photo button
+                        // Take Photo button (large)
                         Button {
                             viewModel.isScanningActive = false
-                            // Tell the coordinator to capture a still image.
                             NotificationCenter.default.post(name: .capturePhoto, object: nil)
                         } label: {
                             Label("撮影する", systemImage: "camera.fill")
-                                .font(.headline)
+                                .font(.title.bold())
                                 .frame(maxWidth: .infinity)
-                                .padding()
+                                .padding(.vertical, 24)
                                 .background(isMonochrome ? Color.black : Color.accentColor)
                                 .foregroundStyle(.white)
-                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                                .clipShape(RoundedRectangle(cornerRadius: 18))
                         }
-                        .padding(.horizontal, 40)
+                        .padding(.horizontal, 24)
                     } else if let barcode = viewModel.scannedBarcode {
                         Text("未登録: \(barcode)")
                             .font(.subheadline)
@@ -133,6 +132,15 @@ struct ScannerView: View {
             }
             .navigationTitle("お薬スキャナー")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        MedicineListView()
+                    } label: {
+                        Image(systemName: "list.bullet.clipboard")
+                    }
+                }
+            }
             .alert("エラー", isPresented: .init(
                 get: { viewModel.errorMessage != nil },
                 set: { if !$0 { viewModel.errorMessage = nil } }
@@ -158,6 +166,8 @@ struct ScannerView: View {
                     ConfirmationView(
                         photo: photo,
                         medicineName: name,
+                        weight: $viewModel.recognizedWeight,
+                        isRecognizingWeight: viewModel.isRecognizingWeight,
                         isMonochrome: isMonochrome,
                         batchCount: viewModel.scannedItems.count,
                         onAddToList: {

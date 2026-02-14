@@ -41,10 +41,9 @@ enum PrintHelper {
 
     // MARK: - Single-Item Composite Rendering
 
-    /// Renders the medicine name and photo into a single `UIImage` sized
-    /// to the requested page layout.
     static func compositeImage(
         medicineName: String,
+        weight: String = "",
         photo: UIImage,
         layout: PageLayout,
         monochrome: Bool = false
@@ -58,11 +57,9 @@ enum PrintHelper {
         let renderer = UIGraphicsImageRenderer(size: pageSize)
 
         return renderer.image { context in
-            // White background
             UIColor.white.setFill()
             context.fill(CGRect(origin: .zero, size: pageSize))
 
-            // ── Title text ──────────────────────────────────────────────
             let maxTextWidth = pageSize.width - margin * 2
 
             let titleAttributes: [NSAttributedString.Key: Any] = [
@@ -70,31 +67,27 @@ enum PrintHelper {
                 .foregroundColor: UIColor.black,
             ]
 
-            let titleRect = CGRect(
-                x: margin,
-                y: textTopPadding,
-                width: maxTextWidth,
-                height: .greatestFiniteMagnitude
-            )
+            // Build title with weight
+            let titleText = weight.isEmpty ? medicineName : "\(medicineName)　\(weight)g"
 
-            let titleBounds = (medicineName as NSString).boundingRect(
+            let titleBounds = (titleText as NSString).boundingRect(
                 with: CGSize(width: maxTextWidth, height: .greatestFiniteMagnitude),
                 options: [.usesLineFragmentOrigin, .usesFontLeading],
                 attributes: titleAttributes,
                 context: nil
             )
 
-            (medicineName as NSString).draw(
+            (titleText as NSString).draw(
                 in: CGRect(
                     x: margin,
                     y: textTopPadding,
-                    width: titleRect.width,
+                    width: maxTextWidth,
                     height: titleBounds.height
                 ),
                 withAttributes: titleAttributes
             )
 
-            // ── Date / timestamp ────────────────────────────────────────
+            // Date / timestamp
             let dateFormatter = DateFormatter()
             dateFormatter.locale = Locale(identifier: "ja_JP")
             dateFormatter.dateFormat = "yyyy年MM月dd日 HH:mm"
@@ -113,7 +106,7 @@ enum PrintHelper {
 
             let dateBounds = (dateString as NSString).size(withAttributes: dateAttributes)
 
-            // ── Photo ───────────────────────────────────────────────────
+            // Photo
             let imageTopY = dateY + dateBounds.height + textToImageGap
             let availableWidth = pageSize.width - margin * 2
             let availableHeight = pageSize.height - imageTopY - margin
@@ -129,7 +122,6 @@ enum PrintHelper {
                 drawWidth = drawHeight * imageAspect
             }
 
-            // Center horizontally
             let drawX = margin + (availableWidth - drawWidth) / 2
             let imageRect = CGRect(x: drawX, y: imageTopY,
                                    width: drawWidth, height: drawHeight)
@@ -138,39 +130,35 @@ enum PrintHelper {
         }
     }
 
-    // MARK: - Batch Composite Rendering
+    // MARK: - Batch Composite Rendering (3 columns)
 
-    /// Renders multiple scanned items into a single A4 `UIImage` in a 2-column
-    /// grid layout. Each cell contains the medicine name and a thumbnail photo.
-    ///
-    /// Layout: 2 columns × N rows, fitting as many items as possible on one page.
-    /// If more than ~6 items, photos shrink to accommodate all entries.
+    /// Renders multiple scanned items into a single A4 `UIImage` in a 3-column
+    /// grid layout. Each cell contains: medicine name + weight (top), photo (below).
     static func compositeBatchImage(items: [ScannedItem], monochrome: Bool = false) -> UIImage? {
         guard !items.isEmpty else { return nil }
 
         let pageSize = PageLayout.a4.sizeInPoints
-        let margin: CGFloat = 30
-        let headerHeight: CGFloat = 50
-        let cellGap: CGFloat = 16
-        let columns = 2
+        let margin: CGFloat = 20
+        let headerHeight: CGFloat = 44
+        let cellGap: CGFloat = 10
+        let columns = 3
 
         let rows = (items.count + columns - 1) / columns
 
         let renderer = UIGraphicsImageRenderer(size: pageSize)
 
         return renderer.image { context in
-            // White background
             UIColor.white.setFill()
             context.fill(CGRect(origin: .zero, size: pageSize))
 
-            // ── Header ──────────────────────────────────────────────────
+            // Header
             let dateFormatter = DateFormatter()
             dateFormatter.locale = Locale(identifier: "ja_JP")
             dateFormatter.dateFormat = "yyyy年MM月dd日 HH:mm"
             let dateString = dateFormatter.string(from: Date())
 
             let headerAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.boldSystemFont(ofSize: 20),
+                .font: UIFont.boldSystemFont(ofSize: 16),
                 .foregroundColor: UIColor.black,
             ]
             let headerText = "お薬一覧（\(items.count)件）  \(dateString)" as NSString
@@ -179,8 +167,8 @@ enum PrintHelper {
                 withAttributes: headerAttributes
             )
 
-            // ── Separator line ──────────────────────────────────────────
-            let separatorY = margin + headerHeight - 10
+            // Separator line
+            let separatorY = margin + headerHeight - 8
             UIColor.lightGray.setStroke()
             let separatorPath = UIBezierPath()
             separatorPath.move(to: CGPoint(x: margin, y: separatorY))
@@ -188,17 +176,27 @@ enum PrintHelper {
             separatorPath.lineWidth = 0.5
             separatorPath.stroke()
 
-            // ── Grid cells ──────────────────────────────────────────────
+            // Grid cells
             let gridTop = margin + headerHeight
-            let availableWidth = pageSize.width - margin * 2 - cellGap * CGFloat(columns - 1)
+            let totalGapX = cellGap * CGFloat(columns - 1)
+            let availableWidth = pageSize.width - margin * 2 - totalGapX
             let cellWidth = availableWidth / CGFloat(columns)
+            let totalGapY = cellGap * max(CGFloat(rows - 1), 0)
             let availableHeight = pageSize.height - gridTop - margin
-            let cellHeight = (availableHeight - cellGap * CGFloat(rows - 1)) / CGFloat(rows)
+            let cellHeight = (availableHeight - totalGapY) / CGFloat(max(rows, 1))
 
-            let nameFont = UIFont.boldSystemFont(ofSize: min(14, cellHeight * 0.12))
+            let nameFontSize: CGFloat = min(11, cellHeight * 0.08)
+            let weightFontSize: CGFloat = min(10, cellHeight * 0.07)
+            let nameFont = UIFont.boldSystemFont(ofSize: nameFontSize)
+            let weightFont = UIFont.monospacedDigitSystemFont(ofSize: weightFontSize, weight: .medium)
+
             let nameAttributes: [NSAttributedString.Key: Any] = [
                 .font: nameFont,
                 .foregroundColor: UIColor.black,
+            ]
+            let weightAttributes: [NSAttributedString.Key: Any] = [
+                .font: weightFont,
+                .foregroundColor: UIColor.darkGray,
             ]
 
             for (index, item) in items.enumerated() {
@@ -208,14 +206,15 @@ enum PrintHelper {
                 let cellX = margin + CGFloat(col) * (cellWidth + cellGap)
                 let cellY = gridTop + CGFloat(row) * (cellHeight + cellGap)
 
-                // Cell border (light gray rounded rect)
+                // Cell background
                 let cellRect = CGRect(x: cellX, y: cellY, width: cellWidth, height: cellHeight)
-                UIColor(white: 0.92, alpha: 1).setFill()
-                let cellPath = UIBezierPath(roundedRect: cellRect, cornerRadius: 8)
+                UIColor(white: 0.95, alpha: 1).setFill()
+                let cellPath = UIBezierPath(roundedRect: cellRect, cornerRadius: 6)
                 cellPath.fill()
 
-                // Medicine name
-                let textPadding: CGFloat = 8
+                let textPadding: CGFloat = 6
+
+                // Medicine name (top of cell)
                 let nameRect = CGRect(
                     x: cellX + textPadding,
                     y: cellY + textPadding,
@@ -227,8 +226,18 @@ enum PrintHelper {
                     withAttributes: nameAttributes
                 )
 
-                // Photo (below name)
-                let photoTop = cellY + textPadding + nameFont.lineHeight * 2 + 6
+                // Weight (below name)
+                let weightY = cellY + textPadding + nameFont.lineHeight * 2 + 2
+                if !item.weight.isEmpty {
+                    let weightText = "\(item.weight)g" as NSString
+                    weightText.draw(
+                        at: CGPoint(x: cellX + textPadding, y: weightY),
+                        withAttributes: weightAttributes
+                    )
+                }
+
+                // Photo (below weight)
+                let photoTop = weightY + weightFont.lineHeight + 4
                 let photoAvailableWidth = cellWidth - textPadding * 2
                 let photoAvailableHeight = cellHeight - (photoTop - cellY) - textPadding
 
@@ -244,13 +253,11 @@ enum PrintHelper {
                     photoWidth = photoHeight * photoAspect
                 }
 
-                // Center photo in available space
                 let photoX = cellX + textPadding + (photoAvailableWidth - photoWidth) / 2
                 let photoRect = CGRect(x: photoX, y: photoTop,
                                        width: photoWidth, height: photoHeight)
 
-                // Clip photo to rounded rect
-                let photoClipPath = UIBezierPath(roundedRect: photoRect, cornerRadius: 6)
+                let photoClipPath = UIBezierPath(roundedRect: photoRect, cornerRadius: 4)
                 context.cgContext.saveGState()
                 photoClipPath.addClip()
                 cellPhoto.draw(in: photoRect)
@@ -261,16 +268,16 @@ enum PrintHelper {
 
     // MARK: - PDF Generation (alternative)
 
-    /// Generates a PDF `Data` blob with the same composite layout.
-    /// Useful if you need to share or archive the printout.
     static func compositePDF(
         medicineName: String,
+        weight: String = "",
         photo: UIImage,
         layout: PageLayout,
         monochrome: Bool = false
     ) -> Data? {
         guard let image = compositeImage(
             medicineName: medicineName,
+            weight: weight,
             photo: photo,
             layout: layout,
             monochrome: monochrome

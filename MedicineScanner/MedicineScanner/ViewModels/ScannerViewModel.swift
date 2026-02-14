@@ -1,11 +1,12 @@
 import AVFoundation
 import SwiftUI
 
-/// A single scanned medicine entry (barcode + name + photo).
+/// A single scanned medicine entry (barcode + name + weight + photo).
 struct ScannedItem: Identifiable {
     let id = UUID()
     let barcode: String
     let medicineName: String
+    var weight: String
     let photo: UIImage
 }
 
@@ -58,6 +59,12 @@ final class ScannerViewModel: ObservableObject {
     /// Text field binding for the registration alert.
     @Published var registrationName = ""
 
+    /// OCR result from scale reading.
+    @Published var recognizedWeight: String = ""
+
+    /// Whether OCR is currently running.
+    @Published var isRecognizingWeight = false
+
     // MARK: - Barcode Handling
 
     /// Called by the camera coordinator when a barcode is detected.
@@ -94,9 +101,18 @@ final class ScannerViewModel: ObservableObject {
     }
 
     /// Called by the camera coordinator when a photo is captured.
+    /// Runs OCR on the photo to extract scale numbers, then shows confirmation.
     func didCapturePhoto(_ image: UIImage) {
         capturedPhoto = image
-        showConfirmation = true
+        isRecognizingWeight = true
+        recognizedWeight = ""
+
+        Task {
+            let result = await OCRService.recognizeNumber(from: image)
+            self.recognizedWeight = result ?? ""
+            self.isRecognizingWeight = false
+            self.showConfirmation = true
+        }
     }
 
     // MARK: - Batch Management
@@ -107,7 +123,12 @@ final class ScannerViewModel: ObservableObject {
               let name = medicineName,
               let photo = capturedPhoto else { return }
 
-        scannedItems.append(ScannedItem(barcode: barcode, medicineName: name, photo: photo))
+        scannedItems.append(ScannedItem(
+            barcode: barcode,
+            medicineName: name,
+            weight: recognizedWeight,
+            photo: photo
+        ))
         resetScan()
     }
 
@@ -121,6 +142,8 @@ final class ScannerViewModel: ObservableObject {
         medicineName = nil
         scannedBarcode = nil
         capturedPhoto = nil
+        recognizedWeight = ""
+        isRecognizingWeight = false
         showConfirmation = false
         isScanningActive = true
     }

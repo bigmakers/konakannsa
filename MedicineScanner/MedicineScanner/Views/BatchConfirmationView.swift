@@ -33,6 +33,11 @@ struct BatchConfirmationView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(item.medicineName)
                                     .font(.body.bold())
+                                if !item.weight.isEmpty {
+                                    Text("\(item.weight)g")
+                                        .font(.subheadline.monospacedDigit())
+                                        .foregroundStyle(.orange)
+                                }
                                 Text(item.barcode)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
@@ -142,9 +147,9 @@ struct BatchConfirmationView: View {
         BatchConfirmationView(viewModel: {
             let vm = ScannerViewModel()
             vm.scannedItems = [
-                ScannedItem(barcode: "4987123456789", medicineName: "ロキソニンS 12錠", photo: UIImage(systemName: "pill.fill")!),
-                ScannedItem(barcode: "4987234567890", medicineName: "バファリンA 20錠", photo: UIImage(systemName: "pill.fill")!),
-                ScannedItem(barcode: "4987345678901", medicineName: "パブロンゴールドA 44錠", photo: UIImage(systemName: "pill.fill")!),
+                ScannedItem(barcode: "4987123456789", medicineName: "ロキソニンS 12錠", weight: "12.5", photo: UIImage(systemName: "pill.fill")!),
+                ScannedItem(barcode: "4987234567890", medicineName: "バファリンA 20錠", weight: "8.3", photo: UIImage(systemName: "pill.fill")!),
+                ScannedItem(barcode: "4987345678901", medicineName: "パブロンゴールドA 44錠", weight: "", photo: UIImage(systemName: "pill.fill")!),
             ]
             return vm
         }())

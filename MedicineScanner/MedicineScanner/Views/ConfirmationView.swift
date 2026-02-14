@@ -1,11 +1,17 @@
 import SwiftUI
 
-/// Preview screen showing the captured photo alongside the medicine name.
-/// Provides options to print a single item, or add it to the batch list
-/// for multi-medicine printing.
+/// Preview screen showing the captured photo alongside the medicine name and
+/// OCR-recognized weight. Provides options to print a single item, or add it
+/// to the batch list for multi-medicine printing.
 struct ConfirmationView: View {
     let photo: UIImage
     let medicineName: String
+
+    /// Binding to the OCR-recognized weight value (editable).
+    @Binding var weight: String
+
+    /// Whether OCR is currently in progress.
+    var isRecognizingWeight: Bool = false
 
     /// Whether monochrome (B&W high-contrast) mode is active.
     var isMonochrome: Bool = false
@@ -25,16 +31,39 @@ struct ConfirmationView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             Text(medicineName)
                 .font(.title2.bold())
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
 
+            // Weight display / edit
+            HStack(spacing: 8) {
+                Image(systemName: "scalemass.fill")
+                    .foregroundStyle(.secondary)
+                if isRecognizingWeight {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("読み取り中...")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    TextField("秤の数値", text: $weight)
+                        .font(.title3.monospacedDigit())
+                        .textFieldStyle(.roundedBorder)
+                        .keyboardType(.decimalPad)
+                        .frame(maxWidth: 160)
+                    Text("g")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.horizontal)
+
             Image(uiImage: photo)
                 .resizable()
                 .scaledToFit()
-                .frame(maxHeight: 340)
+                .frame(maxHeight: 280)
                 .saturation(isMonochrome ? 0 : 1)
                 .contrast(isMonochrome ? 1.3 : 1)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -107,6 +136,7 @@ struct ConfirmationView: View {
 
         guard let printableImage = PrintHelper.compositeImage(
             medicineName: medicineName,
+            weight: weight,
             photo: photo,
             layout: .a4,
             monochrome: isMonochrome
@@ -143,6 +173,7 @@ struct ConfirmationView: View {
         ConfirmationView(
             photo: UIImage(systemName: "pill.fill")!,
             medicineName: "ロキソニンS 12錠",
+            weight: .constant("12.5"),
             batchCount: 2,
             onAddToList: {}
         ) {}
