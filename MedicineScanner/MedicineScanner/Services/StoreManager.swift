@@ -6,9 +6,9 @@ final class StoreManager: ObservableObject {
     static let shared = StoreManager()
 
     // Product identifiers
-    static let premiumID = "com.medicinescanner.premium"
-    static let donation20000ID = "com.medicinescanner.donation.20000"
-    static let donation50000ID = "com.medicinescanner.donation.50000"
+    static let premiumID = "com.konamon.app.premium"
+    static let donation20000ID = "com.konamon.app.donation.20000"
+    static let donation50000ID = "com.konamon.app.donation.50000"
 
     /// Free tier medicine registration limit.
     static let freeLimit = 5
