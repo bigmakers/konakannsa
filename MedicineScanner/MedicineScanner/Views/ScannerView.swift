@@ -310,39 +310,6 @@ struct CameraPreview: UIViewRepresentable {
                 return
             }
 
-            // Configure camera for close-up / zoomed-in capture
-            do {
-                try device.lockForConfiguration()
-
-                // Apply user-selected zoom level
-                let desiredZoom = CGFloat(zoom)
-                device.videoZoomFactor = min(desiredZoom, device.activeFormat.videoMaxZoomFactor)
-
-                // Near-field focus priority
-                if device.isAutoFocusRangeRestrictionSupported {
-                    device.autoFocusRangeRestriction = .near
-                }
-                if device.isFocusModeSupported(.continuousAutoFocus) {
-                    device.focusMode = .continuousAutoFocus
-                }
-                // Lock focus to near distance for macro-like behaviour
-                if device.isFocusPointOfInterestSupported {
-                    device.focusPointOfInterest = CGPoint(x: 0.5, y: 0.5)
-                }
-                // Set minimum focus distance if available (iOS 15+)
-                if #available(iOS 15.0, *) {
-                    // Use the smallest focus distance the device supports
-                    let minDistance = device.minimumFocusDistance
-                    // minimumFocusDistance is read-only; autoFocusRangeRestriction = .near
-                    // already covers this. Log for debugging.
-                    _ = minDistance
-                }
-
-                device.unlockForConfiguration()
-            } catch {
-                // Continue even if camera config fails
-            }
-
             session.beginConfiguration()
             session.sessionPreset = .photo
 
@@ -373,6 +340,32 @@ struct CameraPreview: UIViewRepresentable {
             }
 
             session.commitConfiguration()
+
+            // Configure zoom and focus AFTER session is committed,
+            // because sessionPreset changes reset device settings.
+            do {
+                try device.lockForConfiguration()
+
+                // Apply user-selected zoom level
+                let desiredZoom = CGFloat(zoom)
+                device.videoZoomFactor = min(max(desiredZoom, 1.0),
+                                             device.activeFormat.videoMaxZoomFactor)
+
+                // Near-field focus priority
+                if device.isAutoFocusRangeRestrictionSupported {
+                    device.autoFocusRangeRestriction = .near
+                }
+                if device.isFocusModeSupported(.continuousAutoFocus) {
+                    device.focusMode = .continuousAutoFocus
+                }
+                if device.isFocusPointOfInterestSupported {
+                    device.focusPointOfInterest = CGPoint(x: 0.5, y: 0.5)
+                }
+
+                device.unlockForConfiguration()
+            } catch {
+                // Continue even if camera config fails
+            }
 
             // Preview layer
             let layer = AVCaptureVideoPreviewLayer(session: session)
