@@ -21,19 +21,10 @@ enum PrintHelper {
         }
     }
 
-    // MARK: - Composite Rendering
+    // MARK: - Single-Item Composite Rendering
 
     /// Renders the medicine name and photo into a single `UIImage` sized
     /// to the requested page layout.
-    ///
-    /// The layout places the medicine name at the top of the page followed
-    /// by the photo scaled to fit the remaining space with margins.
-    ///
-    /// - Parameters:
-    ///   - medicineName: Text to render at the top of the page.
-    ///   - photo: The captured `UIImage` to include.
-    ///   - layout: The target page size (`.a4` or `.label`).
-    /// - Returns: A rendered `UIImage`, or `nil` if rendering fails.
     static func compositeImage(
         medicineName: String,
         photo: UIImage,
@@ -124,6 +115,126 @@ enum PrintHelper {
                                    width: drawWidth, height: drawHeight)
 
             photo.draw(in: imageRect)
+        }
+    }
+
+    // MARK: - Batch Composite Rendering
+
+    /// Renders multiple scanned items into a single A4 `UIImage` in a 2-column
+    /// grid layout. Each cell contains the medicine name and a thumbnail photo.
+    ///
+    /// Layout: 2 columns × N rows, fitting as many items as possible on one page.
+    /// If more than ~6 items, photos shrink to accommodate all entries.
+    static func compositeBatchImage(items: [ScannedItem]) -> UIImage? {
+        guard !items.isEmpty else { return nil }
+
+        let pageSize = PageLayout.a4.sizeInPoints
+        let margin: CGFloat = 30
+        let headerHeight: CGFloat = 50
+        let cellGap: CGFloat = 16
+        let columns = 2
+
+        let rows = (items.count + columns - 1) / columns
+
+        let renderer = UIGraphicsImageRenderer(size: pageSize)
+
+        return renderer.image { context in
+            // White background
+            UIColor.white.setFill()
+            context.fill(CGRect(origin: .zero, size: pageSize))
+
+            // ── Header ──────────────────────────────────────────────────
+            let dateFormatter = DateFormatter()
+            dateFormatter.locale = Locale(identifier: "ja_JP")
+            dateFormatter.dateFormat = "yyyy年MM月dd日 HH:mm"
+            let dateString = dateFormatter.string(from: Date())
+
+            let headerAttributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.boldSystemFont(ofSize: 20),
+                .foregroundColor: UIColor.black,
+            ]
+            let headerText = "お薬一覧（\(items.count)件）  \(dateString)" as NSString
+            headerText.draw(
+                at: CGPoint(x: margin, y: margin),
+                withAttributes: headerAttributes
+            )
+
+            // ── Separator line ──────────────────────────────────────────
+            let separatorY = margin + headerHeight - 10
+            UIColor.lightGray.setStroke()
+            let separatorPath = UIBezierPath()
+            separatorPath.move(to: CGPoint(x: margin, y: separatorY))
+            separatorPath.addLine(to: CGPoint(x: pageSize.width - margin, y: separatorY))
+            separatorPath.lineWidth = 0.5
+            separatorPath.stroke()
+
+            // ── Grid cells ──────────────────────────────────────────────
+            let gridTop = margin + headerHeight
+            let availableWidth = pageSize.width - margin * 2 - cellGap * CGFloat(columns - 1)
+            let cellWidth = availableWidth / CGFloat(columns)
+            let availableHeight = pageSize.height - gridTop - margin
+            let cellHeight = (availableHeight - cellGap * CGFloat(rows - 1)) / CGFloat(rows)
+
+            let nameFont = UIFont.boldSystemFont(ofSize: min(14, cellHeight * 0.12))
+            let nameAttributes: [NSAttributedString.Key: Any] = [
+                .font: nameFont,
+                .foregroundColor: UIColor.black,
+            ]
+
+            for (index, item) in items.enumerated() {
+                let col = index % columns
+                let row = index / columns
+
+                let cellX = margin + CGFloat(col) * (cellWidth + cellGap)
+                let cellY = gridTop + CGFloat(row) * (cellHeight + cellGap)
+
+                // Cell border (light gray rounded rect)
+                let cellRect = CGRect(x: cellX, y: cellY, width: cellWidth, height: cellHeight)
+                UIColor(white: 0.92, alpha: 1).setFill()
+                let cellPath = UIBezierPath(roundedRect: cellRect, cornerRadius: 8)
+                cellPath.fill()
+
+                // Medicine name
+                let textPadding: CGFloat = 8
+                let nameRect = CGRect(
+                    x: cellX + textPadding,
+                    y: cellY + textPadding,
+                    width: cellWidth - textPadding * 2,
+                    height: nameFont.lineHeight * 2
+                )
+                (item.medicineName as NSString).draw(
+                    in: nameRect,
+                    withAttributes: nameAttributes
+                )
+
+                // Photo (below name)
+                let photoTop = cellY + textPadding + nameFont.lineHeight * 2 + 6
+                let photoAvailableWidth = cellWidth - textPadding * 2
+                let photoAvailableHeight = cellHeight - (photoTop - cellY) - textPadding
+
+                guard photoAvailableHeight > 0 else { continue }
+
+                let photoAspect = item.photo.size.width / item.photo.size.height
+                var photoWidth = photoAvailableWidth
+                var photoHeight = photoWidth / photoAspect
+
+                if photoHeight > photoAvailableHeight {
+                    photoHeight = photoAvailableHeight
+                    photoWidth = photoHeight * photoAspect
+                }
+
+                // Center photo in available space
+                let photoX = cellX + textPadding + (photoAvailableWidth - photoWidth) / 2
+                let photoRect = CGRect(x: photoX, y: photoTop,
+                                       width: photoWidth, height: photoHeight)
+
+                // Clip photo to rounded rect
+                let photoClipPath = UIBezierPath(roundedRect: photoRect, cornerRadius: 6)
+                context.cgContext.saveGState()
+                photoClipPath.addClip()
+                item.photo.draw(in: photoRect)
+                context.cgContext.restoreGState()
+            }
         }
     }
 

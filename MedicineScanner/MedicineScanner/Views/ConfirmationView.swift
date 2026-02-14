@@ -1,11 +1,17 @@
 import SwiftUI
 
 /// Preview screen showing the captured photo alongside the medicine name.
-/// Provides a "Confirm & Print" button that composites both into a printable
-/// layout and presents the system AirPrint dialog.
+/// Provides options to print a single item, or add it to the batch list
+/// for multi-medicine printing.
 struct ConfirmationView: View {
     let photo: UIImage
     let medicineName: String
+
+    /// Number of items already in the batch list (shown in badge).
+    var batchCount: Int = 0
+
+    /// Called when the user taps "リストに追加して次へ".
+    var onAddToList: (() -> Void)?
 
     /// Called after the user finishes (or cancels) the print flow so
     /// the parent can reset the scanner.
@@ -25,17 +31,40 @@ struct ConfirmationView: View {
             Image(uiImage: photo)
                 .resizable()
                 .scaledToFit()
-                .frame(maxHeight: 400)
+                .frame(maxHeight: 340)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .shadow(radius: 4)
                 .padding(.horizontal)
 
             Spacer()
 
+            // Add to batch list button
+            if let onAddToList {
+                Button {
+                    dismiss()
+                    onAddToList()
+                } label: {
+                    Label(
+                        batchCount > 0
+                            ? "リストに追加して次へ（\(batchCount)件登録済み）"
+                            : "リストに追加して次へ",
+                        systemImage: "plus.rectangle.on.rectangle"
+                    )
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.green)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+                .padding(.horizontal, 40)
+            }
+
+            // Single-item print button
             Button {
                 printCombinedLayout()
             } label: {
-                Label("確認して印刷", systemImage: "printer.fill")
+                Label("この1件を印刷", systemImage: "printer.fill")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -107,7 +136,9 @@ struct ConfirmationView: View {
     NavigationStack {
         ConfirmationView(
             photo: UIImage(systemName: "pill.fill")!,
-            medicineName: "ロキソニンS 12錠"
+            medicineName: "ロキソニンS 12錠",
+            batchCount: 2,
+            onAddToList: {}
         ) {}
     }
 }

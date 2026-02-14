@@ -13,6 +13,7 @@
 		A1000004 /* ScannerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000004 /* ScannerViewModel.swift */; };
 		A1000005 /* MedicineService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000005 /* MedicineService.swift */; };
 		A1000006 /* PrintHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000006 /* PrintHelper.swift */; };
+		A1000007 /* BatchConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000008 /* BatchConfirmationView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +24,7 @@
 		A2000005 /* MedicineService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicineService.swift; sourceTree = "<group>"; };
 		A2000006 /* PrintHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrintHelper.swift; sourceTree = "<group>"; };
 		A2000007 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A2000008 /* BatchConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchConfirmationView.swift; sourceTree = "<group>"; };
 		A2000010 /* MedicineScanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MedicineScanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -63,6 +65,7 @@
 			children = (
 				A2000002 /* ScannerView.swift */,
 				A2000003 /* ConfirmationView.swift */,
+				A2000008 /* BatchConfirmationView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -174,6 +177,7 @@
 				A1000004 /* ScannerViewModel.swift in Sources */,
 				A1000005 /* MedicineService.swift in Sources */,
 				A1000006 /* PrintHelper.swift in Sources */,
+				A1000007 /* BatchConfirmationView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -5,6 +5,8 @@ import SwiftUI
 
 /// Home screen that shows the live camera feed, overlays the detected medicine
 /// name, and provides a "Take Photo" button once a barcode has been matched.
+/// Also supports batch scanning: users can add multiple medicines to a list
+/// and print them all together on a single A4 page.
 struct ScannerView: View {
     @StateObject private var viewModel = ScannerViewModel()
 
@@ -17,6 +19,28 @@ struct ScannerView: View {
 
                 // Overlay UI
                 VStack {
+                    // Batch count badge (top-right area)
+                    HStack {
+                        Spacer()
+                        if !viewModel.scannedItems.isEmpty {
+                            Button {
+                                viewModel.showBatchConfirmation = true
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "list.bullet.rectangle.portrait")
+                                    Text("\(viewModel.scannedItems.count)件")
+                                        .fontWeight(.semibold)
+                                }
+                                .font(.subheadline)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .background(.ultraThinMaterial, in: Capsule())
+                            }
+                            .padding(.trailing, 16)
+                            .padding(.top, 8)
+                        }
+                    }
+
                     Spacer()
 
                     if let name = viewModel.medicineName {
@@ -63,6 +87,26 @@ struct ScannerView: View {
                         .font(.subheadline)
                         .padding(.top, 6)
                     }
+
+                    // "Print all" button when batch list has items
+                    if !viewModel.scannedItems.isEmpty && viewModel.medicineName == nil {
+                        Button {
+                            viewModel.showBatchConfirmation = true
+                        } label: {
+                            Label(
+                                "まとめて印刷（\(viewModel.scannedItems.count)件）",
+                                systemImage: "printer.fill"
+                            )
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.orange)
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                        }
+                        .padding(.horizontal, 40)
+                        .padding(.top, 12)
+                    }
                 }
                 .padding(.bottom, 40)
             }
@@ -79,10 +123,20 @@ struct ScannerView: View {
             .navigationDestination(isPresented: $viewModel.showConfirmation) {
                 if let photo = viewModel.capturedPhoto,
                    let name = viewModel.medicineName {
-                    ConfirmationView(photo: photo, medicineName: name) {
+                    ConfirmationView(
+                        photo: photo,
+                        medicineName: name,
+                        batchCount: viewModel.scannedItems.count,
+                        onAddToList: {
+                            viewModel.addToListAndContinue()
+                        }
+                    ) {
                         viewModel.resetScan()
                     }
                 }
+            }
+            .navigationDestination(isPresented: $viewModel.showBatchConfirmation) {
+                BatchConfirmationView(viewModel: viewModel)
             }
         }
     }
