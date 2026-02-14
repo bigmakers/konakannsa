@@ -63,7 +63,7 @@ enum PrintHelper {
             let maxTextWidth = pageSize.width - margin * 2
 
             let titleAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.boldSystemFont(ofSize: layout == .a4 ? 28 : 18),
+                .font: UIFont.boldSystemFont(ofSize: layout == .a4 ? 40 : 26),
                 .foregroundColor: UIColor.black,
             ]
 
@@ -185,10 +185,10 @@ enum PrintHelper {
             let availableHeight = pageSize.height - gridTop - margin
             let cellHeight = (availableHeight - totalGapY) / CGFloat(max(rows, 1))
 
-            let nameFontSize: CGFloat = min(11, cellHeight * 0.08)
-            let weightFontSize: CGFloat = min(10, cellHeight * 0.07)
+            let nameFontSize: CGFloat = min(16, cellHeight * 0.12)
+            let weightFontSize: CGFloat = min(15, cellHeight * 0.11)
             let nameFont = UIFont.boldSystemFont(ofSize: nameFontSize)
-            let weightFont = UIFont.monospacedDigitSystemFont(ofSize: weightFontSize, weight: .medium)
+            let weightFont = UIFont.monospacedDigitSystemFont(ofSize: weightFontSize, weight: .bold)
 
             let nameAttributes: [NSAttributedString.Key: Any] = [
                 .font: nameFont,
