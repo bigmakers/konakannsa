@@ -81,22 +81,29 @@ struct BatchConfirmationView: View {
                 .padding(.horizontal, 40)
                 .disabled(isPrinting || viewModel.scannedItems.isEmpty)
 
-                HStack(spacing: 20) {
-                    Button("スキャナーに戻る") {
+                Button {
+                    dismiss()
+                } label: {
+                    Label("スキャナーに戻る", systemImage: "arrow.uturn.backward")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color(.systemGray4))
+                        .foregroundStyle(.primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+                .padding(.horizontal, 40)
+
+                if !viewModel.scannedItems.isEmpty {
+                    Button("リストをクリア") {
+                        viewModel.resetAll()
                         dismiss()
                     }
                     .font(.subheadline)
-
-                    if !viewModel.scannedItems.isEmpty {
-                        Button("リストをクリア") {
-                            viewModel.resetAll()
-                            dismiss()
-                        }
-                        .font(.subheadline)
-                        .foregroundStyle(.red)
-                    }
+                    .foregroundStyle(.red)
                 }
-                .padding(.bottom, 8)
+
+                Spacer().frame(height: 8)
             }
             .padding(.top, 8)
         }
