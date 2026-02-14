@@ -293,11 +293,10 @@ struct CameraPreview: UIViewRepresentable {
             didOutput metadataObjects: [AVMetadataObject],
             from connection: AVCaptureConnection
         ) {
-            guard viewModel.isScanningActive else { return }
-
             if let readable = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
                let value = readable.stringValue {
                 Task { @MainActor in
+                    guard viewModel.isScanningActive else { return }
                     viewModel.didDetectBarcode(value)
                 }
             }
