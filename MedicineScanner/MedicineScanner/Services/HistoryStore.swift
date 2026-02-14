@@ -68,8 +68,9 @@ enum HistoryStore {
         return records.sorted { $0.date > $1.date }
     }
 
-    /// Saves a single scanned item to history.
-    static func save(barcode: String, medicineName: String, weight: String, photo: UIImage) {
+    /// Saves a single scanned item to history and returns the assigned scanID.
+    @discardableResult
+    static func save(barcode: String, medicineName: String, weight: String, photo: UIImage) -> Int {
         ensureDirectories()
         let id = UUID().uuidString
         let fileName = "\(id).jpg"
@@ -95,13 +96,17 @@ enum HistoryStore {
         var records = readJSON()
         records.append(record)
         writeJSON(records)
+        return nextID
     }
 
-    /// Saves multiple items at once (batch print).
-    static func saveBatch(_ items: [ScannedItem]) {
+    /// Saves multiple items at once and returns assigned scanIDs in order.
+    static func saveBatch(_ items: [ScannedItem]) -> [Int] {
+        var ids: [Int] = []
         for item in items {
-            save(barcode: item.barcode, medicineName: item.medicineName, weight: item.weight, photo: item.photo)
+            let scanID = save(barcode: item.barcode, medicineName: item.medicineName, weight: item.weight, photo: item.photo)
+            ids.append(scanID)
         }
+        return ids
     }
 
     /// Finds a record by its scanID.

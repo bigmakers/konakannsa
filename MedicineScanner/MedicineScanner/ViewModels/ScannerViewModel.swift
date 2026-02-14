@@ -8,6 +8,8 @@ struct ScannedItem: Identifiable {
     let medicineName: String
     var weight: String
     let photo: UIImage
+    /// Assigned after saving to history (for printing).
+    var scanID: Int?
 }
 
 /// Manages the barcode scanning session, medicine lookup, and photo capture flow.

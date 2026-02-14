@@ -127,8 +127,19 @@ struct BatchConfirmationView: View {
     private func printBatchWithPhotos() {
         isPrinting = true
 
+        // Save to history first to get scanIDs
+        let scanIDs = HistoryStore.saveBatch(viewModel.scannedItems)
+
+        // Attach scanIDs to items for rendering
+        var itemsWithIDs = viewModel.scannedItems
+        for i in itemsWithIDs.indices {
+            if i < scanIDs.count {
+                itemsWithIDs[i].scanID = scanIDs[i]
+            }
+        }
+
         guard let printableImage = PrintHelper.compositeBatchImage(
-            items: viewModel.scannedItems,
+            items: itemsWithIDs,
             monochrome: isMonochrome
         ) else {
             printError = "印刷用レイアウトの生成に失敗しました。"
@@ -149,7 +160,6 @@ struct BatchConfirmationView: View {
             if let error {
                 printError = error.localizedDescription
             } else if completed {
-                HistoryStore.saveBatch(viewModel.scannedItems)
                 viewModel.resetAll()
                 dismiss()
             }

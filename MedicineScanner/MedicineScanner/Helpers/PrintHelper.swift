@@ -119,6 +119,9 @@ enum PrintHelper {
             let nameFont = UIFont.boldSystemFont(ofSize: nameFontSize)
             let weightFont = UIFont.monospacedDigitSystemFont(ofSize: weightFontSize, weight: .bold)
 
+            let idFontSize: CGFloat = min(11, cellHeight * 0.08)
+            let idFont = UIFont.monospacedDigitSystemFont(ofSize: idFontSize, weight: .medium)
+
             let nameAttributes: [NSAttributedString.Key: Any] = [
                 .font: nameFont,
                 .foregroundColor: UIColor.black,
@@ -126,6 +129,10 @@ enum PrintHelper {
             let weightAttributes: [NSAttributedString.Key: Any] = [
                 .font: weightFont,
                 .foregroundColor: UIColor.darkGray,
+            ]
+            let idAttributes: [NSAttributedString.Key: Any] = [
+                .font: idFont,
+                .foregroundColor: UIColor.systemBlue,
             ]
 
             for (index, item) in items.enumerated() {
@@ -142,6 +149,17 @@ enum PrintHelper {
                 cellPath.fill()
 
                 let textPadding: CGFloat = 6
+
+                // ScanID (top-right of cell)
+                if let scanID = item.scanID {
+                    let idStr = String(format: "#%06d", scanID) as NSString
+                    let idSize = idStr.size(withAttributes: idAttributes)
+                    idStr.draw(
+                        at: CGPoint(x: cellX + cellWidth - textPadding - idSize.width,
+                                    y: cellY + textPadding),
+                        withAttributes: idAttributes
+                    )
+                }
 
                 // Medicine name (top of cell)
                 let nameRect = CGRect(

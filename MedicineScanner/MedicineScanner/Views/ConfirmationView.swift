@@ -215,11 +215,24 @@ struct ConfirmationView: View {
     private func printCombinedLayout() {
         isPrinting = true
 
-        guard let printableImage = PrintHelper.compositeImage(
+        // Save first to get scanID
+        let scanID = HistoryStore.save(
+            barcode: "",
             medicineName: medicineName,
             weight: weight,
-            photo: photo,
-            layout: .a4,
+            photo: photo
+        )
+
+        var item = ScannedItem(
+            barcode: "",
+            medicineName: medicineName,
+            weight: weight,
+            photo: photo
+        )
+        item.scanID = scanID
+
+        guard let printableImage = PrintHelper.compositeBatchImage(
+            items: [item],
             monochrome: isMonochrome
         ) else {
             printError = "印刷用レイアウトの生成に失敗しました。"
@@ -240,12 +253,6 @@ struct ConfirmationView: View {
             if let error {
                 printError = error.localizedDescription
             } else if completed {
-                HistoryStore.save(
-                    barcode: "",
-                    medicineName: medicineName,
-                    weight: weight,
-                    photo: photo
-                )
                 dismiss()
                 onDone()
             }
