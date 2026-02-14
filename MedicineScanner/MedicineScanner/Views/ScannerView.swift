@@ -34,7 +34,7 @@ struct ScannerView: View {
                             // Tell the coordinator to capture a still image.
                             NotificationCenter.default.post(name: .capturePhoto, object: nil)
                         } label: {
-                            Label("Take Photo", systemImage: "camera.fill")
+                            Label("撮影する", systemImage: "camera.fill")
                                 .font(.headline)
                                 .frame(maxWidth: .infinity)
                                 .padding()
@@ -44,12 +44,12 @@ struct ScannerView: View {
                         }
                         .padding(.horizontal, 40)
                     } else if let barcode = viewModel.scannedBarcode {
-                        Text("Unknown barcode: \(barcode)")
+                        Text("未登録のバーコード: \(barcode)")
                             .font(.subheadline)
                             .padding(10)
                             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
                     } else {
-                        Text("Point camera at a medicine barcode")
+                        Text("医薬品のバーコードにカメラを向けてください")
                             .font(.subheadline)
                             .padding(10)
                             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
@@ -57,7 +57,7 @@ struct ScannerView: View {
 
                     // Reset button (visible after a barcode is scanned)
                     if viewModel.scannedBarcode != nil && !viewModel.showConfirmation {
-                        Button("Scan Again") {
+                        Button("もう一度スキャン") {
                             viewModel.resetScan()
                         }
                         .font(.subheadline)
@@ -66,9 +66,9 @@ struct ScannerView: View {
                 }
                 .padding(.bottom, 40)
             }
-            .navigationTitle("Medicine Scanner")
+            .navigationTitle("お薬スキャナー")
             .navigationBarTitleDisplayMode(.inline)
-            .alert("Error", isPresented: .init(
+            .alert("エラー", isPresented: .init(
                 get: { viewModel.errorMessage != nil },
                 set: { if !$0 { viewModel.errorMessage = nil } }
             )) {
@@ -152,7 +152,7 @@ struct CameraPreview: UIViewRepresentable {
                   let input = try? AVCaptureDeviceInput(device: device)
             else {
                 Task { @MainActor in
-                    viewModel.errorMessage = "Camera not available on this device."
+                    viewModel.errorMessage = "この端末ではカメラを利用できません。"
                 }
                 return
             }
@@ -241,7 +241,7 @@ struct CameraPreview: UIViewRepresentable {
         ) {
             if let error {
                 Task { @MainActor in
-                    viewModel.errorMessage = "Photo capture failed: \(error.localizedDescription)"
+                    viewModel.errorMessage = "写真の撮影に失敗しました: \(error.localizedDescription)"
                 }
                 return
             }

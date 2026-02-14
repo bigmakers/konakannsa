@@ -35,7 +35,7 @@ struct ConfirmationView: View {
             Button {
                 printCombinedLayout()
             } label: {
-                Label("Confirm & Print", systemImage: "printer.fill")
+                Label("確認して印刷", systemImage: "printer.fill")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -46,7 +46,7 @@ struct ConfirmationView: View {
             .padding(.horizontal, 40)
             .disabled(isPrinting)
 
-            Button("Back to Scanner") {
+            Button("スキャナーに戻る") {
                 dismiss()
                 onDone()
             }
@@ -54,9 +54,9 @@ struct ConfirmationView: View {
             .padding(.bottom, 8)
         }
         .padding(.top, 20)
-        .navigationTitle("Confirm")
+        .navigationTitle("確認")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Print Error", isPresented: .init(
+        .alert("印刷エラー", isPresented: .init(
             get: { printError != nil },
             set: { if !$0 { printError = nil } }
         )) {
@@ -76,7 +76,7 @@ struct ConfirmationView: View {
             photo: photo,
             layout: .a4
         ) else {
-            printError = "Failed to generate printable layout."
+            printError = "印刷用レイアウトの生成に失敗しました。"
             isPrinting = false
             return
         }
@@ -84,7 +84,7 @@ struct ConfirmationView: View {
         let printController = UIPrintInteractionController.shared
         let printInfo = UIPrintInfo.printInfo()
         printInfo.outputType = .general
-        printInfo.jobName = "Medicine – \(medicineName)"
+        printInfo.jobName = "お薬 – \(medicineName)"
 
         printController.printInfo = printInfo
         printController.printingItem = printableImage

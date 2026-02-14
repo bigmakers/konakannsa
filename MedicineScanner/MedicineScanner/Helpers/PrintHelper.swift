@@ -85,7 +85,8 @@ enum PrintHelper {
 
             // ── Date / timestamp ────────────────────────────────────────
             let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy/MM/dd HH:mm"
+            dateFormatter.locale = Locale(identifier: "ja_JP")
+            dateFormatter.dateFormat = "yyyy年MM月dd日 HH:mm"
             let dateString = dateFormatter.string(from: Date())
 
             let dateAttributes: [NSAttributedString.Key: Any] = [
