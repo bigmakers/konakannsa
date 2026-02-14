@@ -63,20 +63,20 @@ enum PrintHelper {
         return compositeBatchImage(items: [item], monochrome: monochrome)
     }
 
-    // MARK: - Batch Composite Rendering (3 columns)
+    // MARK: - Batch Composite Rendering (4 columns × 5 rows, column-major)
 
-    /// Renders multiple scanned items into a single A4 `UIImage` in a 3-column
-    /// grid layout. Each cell contains: medicine name + weight (top), photo (below).
+    /// Renders multiple scanned items into a single A4 `UIImage` in a 4-column,
+    /// 5-row grid. Each cell: medicine name → ID → weight → photo (top-to-bottom).
+    /// Items fill vertically first (column by column).
     static func compositeBatchImage(items: [ScannedItem], monochrome: Bool = false) -> UIImage? {
         guard !items.isEmpty else { return nil }
 
         let pageSize = PageLayout.a4.sizeInPoints
-        let margin: CGFloat = 20
-        let headerHeight: CGFloat = 44
-        let cellGap: CGFloat = 10
-        let columns = 3
-
-        let rows = (items.count + columns - 1) / columns
+        let margin: CGFloat = 16
+        let headerHeight: CGFloat = 36
+        let cellGap: CGFloat = 6
+        let columns = 4
+        let maxRows = 5
 
         let renderer = UIGraphicsImageRenderer(size: pageSize)
 
@@ -91,7 +91,7 @@ enum PrintHelper {
             let dateString = dateFormatter.string(from: Date())
 
             let headerAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.boldSystemFont(ofSize: 16),
+                .font: UIFont.boldSystemFont(ofSize: 12),
                 .foregroundColor: UIColor.black,
             ]
             let headerText = "お薬一覧（\(items.count)件）  \(dateString)" as NSString
@@ -101,7 +101,7 @@ enum PrintHelper {
             )
 
             // Separator line
-            let separatorY = margin + headerHeight - 8
+            let separatorY = margin + headerHeight - 6
             UIColor.lightGray.setStroke()
             let separatorPath = UIBezierPath()
             separatorPath.move(to: CGPoint(x: margin, y: separatorY))
@@ -114,34 +114,37 @@ enum PrintHelper {
             let totalGapX = cellGap * CGFloat(columns - 1)
             let availableWidth = pageSize.width - margin * 2 - totalGapX
             let cellWidth = availableWidth / CGFloat(columns)
-            let totalGapY = cellGap * max(CGFloat(rows - 1), 0)
+            let totalGapY = cellGap * CGFloat(maxRows - 1)
             let availableHeight = pageSize.height - gridTop - margin
-            let cellHeight = (availableHeight - totalGapY) / CGFloat(max(rows, 1))
+            let cellHeight = (availableHeight - totalGapY) / CGFloat(maxRows)
 
-            let nameFontSize: CGFloat = min(16, cellHeight * 0.12)
-            let weightFontSize: CGFloat = min(15, cellHeight * 0.11)
+            // Font sizes: name is small, ID and weight are compact
+            let nameFontSize: CGFloat = min(8, cellHeight * 0.06)
+            let idFontSize: CGFloat = min(7, cellHeight * 0.05)
+            let weightFontSize: CGFloat = min(8, cellHeight * 0.06)
             let nameFont = UIFont.boldSystemFont(ofSize: nameFontSize)
-            let weightFont = UIFont.monospacedDigitSystemFont(ofSize: weightFontSize, weight: .bold)
-
-            let idFontSize: CGFloat = min(11, cellHeight * 0.08)
             let idFont = UIFont.monospacedDigitSystemFont(ofSize: idFontSize, weight: .medium)
+            let weightFont = UIFont.monospacedDigitSystemFont(ofSize: weightFontSize, weight: .bold)
 
             let nameAttributes: [NSAttributedString.Key: Any] = [
                 .font: nameFont,
                 .foregroundColor: UIColor.black,
             ]
-            let weightAttributes: [NSAttributedString.Key: Any] = [
-                .font: weightFont,
-                .foregroundColor: UIColor.darkGray,
-            ]
             let idAttributes: [NSAttributedString.Key: Any] = [
                 .font: idFont,
                 .foregroundColor: UIColor.systemBlue,
             ]
+            let weightAttributes: [NSAttributedString.Key: Any] = [
+                .font: weightFont,
+                .foregroundColor: UIColor.darkGray,
+            ]
 
             for (index, item) in items.enumerated() {
-                let col = index % columns
-                let row = index / columns
+                // Column-major order: fill vertically first
+                let row = index % maxRows
+                let col = index / maxRows
+
+                guard col < columns else { break }
 
                 let cellX = margin + CGFloat(col) * (cellWidth + cellGap)
                 let cellY = gridTop + CGFloat(row) * (cellHeight + cellGap)
@@ -149,48 +152,48 @@ enum PrintHelper {
                 // Cell background
                 let cellRect = CGRect(x: cellX, y: cellY, width: cellWidth, height: cellHeight)
                 UIColor(white: 0.95, alpha: 1).setFill()
-                let cellPath = UIBezierPath(roundedRect: cellRect, cornerRadius: 6)
+                let cellPath = UIBezierPath(roundedRect: cellRect, cornerRadius: 4)
                 cellPath.fill()
 
-                let textPadding: CGFloat = 6
+                let textPadding: CGFloat = 4
+                var cursorY = cellY + textPadding
 
-                // ScanID (top-right of cell)
-                if let scanID = item.scanID {
-                    let idStr = String(format: "#%06d", scanID) as NSString
-                    let idSize = idStr.size(withAttributes: idAttributes)
-                    idStr.draw(
-                        at: CGPoint(x: cellX + cellWidth - textPadding - idSize.width,
-                                    y: cellY + textPadding),
-                        withAttributes: idAttributes
-                    )
-                }
-
-                // Medicine name (top of cell)
+                // 1. Medicine name (top)
                 let nameRect = CGRect(
                     x: cellX + textPadding,
-                    y: cellY + textPadding,
+                    y: cursorY,
                     width: cellWidth - textPadding * 2,
-                    height: nameFont.lineHeight * 2
+                    height: nameFont.lineHeight + 2
                 )
                 (item.medicineName as NSString).draw(
                     in: nameRect,
                     withAttributes: nameAttributes
                 )
+                cursorY += nameFont.lineHeight + 2
 
-                // Weight (below name)
-                let weightY = cellY + textPadding + nameFont.lineHeight * 2 + 2
+                // 2. ScanID (below name)
+                if let scanID = item.scanID {
+                    let idStr = String(format: "#%06d", scanID) as NSString
+                    idStr.draw(
+                        at: CGPoint(x: cellX + textPadding, y: cursorY),
+                        withAttributes: idAttributes
+                    )
+                    cursorY += idFont.lineHeight + 1
+                }
+
+                // 3. Weight (below ID)
                 if !item.weight.isEmpty {
                     let weightText = "\(item.weight)g" as NSString
                     weightText.draw(
-                        at: CGPoint(x: cellX + textPadding, y: weightY),
+                        at: CGPoint(x: cellX + textPadding, y: cursorY),
                         withAttributes: weightAttributes
                     )
                 }
+                cursorY += weightFont.lineHeight + 2
 
-                // Photo (below weight)
-                let photoTop = weightY + weightFont.lineHeight + 4
+                // 4. Photo (fill remaining space)
                 let photoAvailableWidth = cellWidth - textPadding * 2
-                let photoAvailableHeight = cellHeight - (photoTop - cellY) - textPadding
+                let photoAvailableHeight = cellHeight - (cursorY - cellY) - textPadding
 
                 guard photoAvailableHeight > 0 else { continue }
 
@@ -205,10 +208,10 @@ enum PrintHelper {
                 }
 
                 let photoX = cellX + textPadding + (photoAvailableWidth - photoWidth) / 2
-                let photoRect = CGRect(x: photoX, y: photoTop,
+                let photoRect = CGRect(x: photoX, y: cursorY,
                                        width: photoWidth, height: photoHeight)
 
-                let photoClipPath = UIBezierPath(roundedRect: photoRect, cornerRadius: 4)
+                let photoClipPath = UIBezierPath(roundedRect: photoRect, cornerRadius: 3)
                 context.cgContext.saveGState()
                 photoClipPath.addClip()
                 cellPhoto.draw(in: photoRect)
