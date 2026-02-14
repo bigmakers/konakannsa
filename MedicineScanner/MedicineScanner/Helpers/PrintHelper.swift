@@ -41,6 +41,8 @@ enum PrintHelper {
 
     // MARK: - Single-Item Composite Rendering
 
+    /// Renders a single item using the same 3-column grid layout as the batch
+    /// print, placing the item in the left column only.
     static func compositeImage(
         medicineName: String,
         weight: String = "",
@@ -48,86 +50,13 @@ enum PrintHelper {
         layout: PageLayout,
         monochrome: Bool = false
     ) -> UIImage? {
-        let processedPhoto = monochrome ? photo.monochromed() : photo
-        let pageSize = layout.sizeInPoints
-        let margin: CGFloat = 30
-        let textTopPadding: CGFloat = 40
-        let textToImageGap: CGFloat = 20
-
-        let renderer = UIGraphicsImageRenderer(size: pageSize)
-
-        return renderer.image { context in
-            UIColor.white.setFill()
-            context.fill(CGRect(origin: .zero, size: pageSize))
-
-            let maxTextWidth = pageSize.width - margin * 2
-
-            let titleAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.boldSystemFont(ofSize: layout == .a4 ? 40 : 26),
-                .foregroundColor: UIColor.black,
-            ]
-
-            // Build title with weight
-            let titleText = weight.isEmpty ? medicineName : "\(medicineName)　\(weight)g"
-
-            let titleBounds = (titleText as NSString).boundingRect(
-                with: CGSize(width: maxTextWidth, height: .greatestFiniteMagnitude),
-                options: [.usesLineFragmentOrigin, .usesFontLeading],
-                attributes: titleAttributes,
-                context: nil
-            )
-
-            (titleText as NSString).draw(
-                in: CGRect(
-                    x: margin,
-                    y: textTopPadding,
-                    width: maxTextWidth,
-                    height: titleBounds.height
-                ),
-                withAttributes: titleAttributes
-            )
-
-            // Date / timestamp
-            let dateFormatter = DateFormatter()
-            dateFormatter.locale = Locale(identifier: "ja_JP")
-            dateFormatter.dateFormat = "yyyy年MM月dd日 HH:mm"
-            let dateString = dateFormatter.string(from: Date())
-
-            let dateAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: layout == .a4 ? 14 : 10),
-                .foregroundColor: UIColor.darkGray,
-            ]
-
-            let dateY = textTopPadding + titleBounds.height + 4
-            (dateString as NSString).draw(
-                at: CGPoint(x: margin, y: dateY),
-                withAttributes: dateAttributes
-            )
-
-            let dateBounds = (dateString as NSString).size(withAttributes: dateAttributes)
-
-            // Photo
-            let imageTopY = dateY + dateBounds.height + textToImageGap
-            let availableWidth = pageSize.width - margin * 2
-            let availableHeight = pageSize.height - imageTopY - margin
-
-            guard availableHeight > 0, availableWidth > 0 else { return }
-
-            let imageAspect = photo.size.width / photo.size.height
-            var drawWidth = availableWidth
-            var drawHeight = drawWidth / imageAspect
-
-            if drawHeight > availableHeight {
-                drawHeight = availableHeight
-                drawWidth = drawHeight * imageAspect
-            }
-
-            let drawX = margin + (availableWidth - drawWidth) / 2
-            let imageRect = CGRect(x: drawX, y: imageTopY,
-                                   width: drawWidth, height: drawHeight)
-
-            processedPhoto.draw(in: imageRect)
-        }
+        let item = ScannedItem(
+            barcode: "",
+            medicineName: medicineName,
+            weight: weight,
+            photo: photo
+        )
+        return compositeBatchImage(items: [item], monochrome: monochrome)
     }
 
     // MARK: - Batch Composite Rendering (3 columns)
