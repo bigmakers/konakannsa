@@ -9,6 +9,7 @@ import SwiftUI
 /// and print them all together on a single A4 page.
 struct ScannerView: View {
     @StateObject private var viewModel = ScannerViewModel()
+    @AppStorage("isMonochrome") private var isMonochrome = false
 
     var body: some View {
         NavigationStack {
@@ -16,11 +17,31 @@ struct ScannerView: View {
                 // Live camera preview + barcode scanner
                 CameraPreview(viewModel: viewModel)
                     .ignoresSafeArea()
+                    .saturation(isMonochrome ? 0 : 1)
+                    .contrast(isMonochrome ? 1.3 : 1)
 
                 // Overlay UI
                 VStack {
-                    // Batch count badge (top-right area)
+                    // Theme toggle (top-left) + Batch count badge (top-right)
                     HStack {
+                        Button {
+                            isMonochrome.toggle()
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: isMonochrome
+                                      ? "circle.lefthalf.filled"
+                                      : "paintpalette.fill")
+                                Text(isMonochrome ? "白黒" : "カラー")
+                                    .fontWeight(.semibold)
+                            }
+                            .font(.subheadline)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(.ultraThinMaterial, in: Capsule())
+                        }
+                        .padding(.leading, 16)
+                        .padding(.top, 8)
+
                         Spacer()
                         if !viewModel.scannedItems.isEmpty {
                             Button {
@@ -62,7 +83,7 @@ struct ScannerView: View {
                                 .font(.headline)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color.accentColor)
+                                .background(isMonochrome ? Color.black : Color.accentColor)
                                 .foregroundStyle(.white)
                                 .clipShape(RoundedRectangle(cornerRadius: 14))
                         }
@@ -100,7 +121,7 @@ struct ScannerView: View {
                             .font(.headline)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.orange)
+                            .background(isMonochrome ? Color.black : Color.orange)
                             .foregroundStyle(.white)
                             .clipShape(RoundedRectangle(cornerRadius: 14))
                         }
@@ -126,6 +147,7 @@ struct ScannerView: View {
                     ConfirmationView(
                         photo: photo,
                         medicineName: name,
+                        isMonochrome: isMonochrome,
                         batchCount: viewModel.scannedItems.count,
                         onAddToList: {
                             viewModel.addToListAndContinue()

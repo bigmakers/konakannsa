@@ -7,6 +7,9 @@ struct ConfirmationView: View {
     let photo: UIImage
     let medicineName: String
 
+    /// Whether monochrome (B&W high-contrast) mode is active.
+    var isMonochrome: Bool = false
+
     /// Number of items already in the batch list (shown in badge).
     var batchCount: Int = 0
 
@@ -32,6 +35,8 @@ struct ConfirmationView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(maxHeight: 340)
+                .saturation(isMonochrome ? 0 : 1)
+                .contrast(isMonochrome ? 1.3 : 1)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .shadow(radius: 4)
                 .padding(.horizontal)
@@ -53,7 +58,7 @@ struct ConfirmationView: View {
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.green)
+                    .background(isMonochrome ? Color.black : Color.green)
                     .foregroundStyle(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
@@ -68,7 +73,7 @@ struct ConfirmationView: View {
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.accentColor)
+                    .background(isMonochrome ? Color.black : Color.accentColor)
                     .foregroundStyle(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 14))
             }
@@ -103,7 +108,8 @@ struct ConfirmationView: View {
         guard let printableImage = PrintHelper.compositeImage(
             medicineName: medicineName,
             photo: photo,
-            layout: .a4
+            layout: .a4,
+            monochrome: isMonochrome
         ) else {
             printError = "印刷用レイアウトの生成に失敗しました。"
             isPrinting = false

@@ -4,6 +4,7 @@ import SwiftUI
 /// print them all together on a single A4 page or remove individual items.
 struct BatchConfirmationView: View {
     @ObservedObject var viewModel: ScannerViewModel
+    @AppStorage("isMonochrome") private var isMonochrome = false
     @Environment(\.dismiss) private var dismiss
 
     @State private var isPrinting = false
@@ -25,6 +26,8 @@ struct BatchConfirmationView: View {
                                 .resizable()
                                 .scaledToFill()
                                 .frame(width: 60, height: 60)
+                                .saturation(isMonochrome ? 0 : 1)
+                                .contrast(isMonochrome ? 1.3 : 1)
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
                             VStack(alignment: .leading, spacing: 4) {
@@ -60,7 +63,7 @@ struct BatchConfirmationView: View {
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.orange)
+                    .background(isMonochrome ? Color.black : Color.orange)
                     .foregroundStyle(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
@@ -104,7 +107,8 @@ struct BatchConfirmationView: View {
         isPrinting = true
 
         guard let printableImage = PrintHelper.compositeBatchImage(
-            items: viewModel.scannedItems
+            items: viewModel.scannedItems,
+            monochrome: isMonochrome
         ) else {
             printError = "印刷用レイアウトの生成に失敗しました。"
             isPrinting = false

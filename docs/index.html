@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>お薬スキャナー - バーコード読取 &amp; 秤量記録 印刷アプリ</title>
+  <meta name="description" content="医薬品のバーコードをスキャンし、秤（はかり）の重量表示を撮影して、AirPrintで記録を印刷。複数の薬品をA4にまとめて一括印刷も可能。">
+  <style>
+    :root {
+      --primary: #000000;
+      --hero-bg: #000000;
+      --hero-text: #ffffff;
+      --hero-sub: #888888;
+      --nav-bg: rgba(255,255,255,0.92);
+      --nav-border: #e0e0e0;
+      --bg: #ffffff;
+      --bg-alt: #fafafa;
+      --card-bg: #fafafa;
+      --card-border: #e0e0e0;
+      --card-hover: #f0f0f0;
+      --text: #000000;
+      --text-secondary: #666666;
+      --text-muted: #888888;
+      --border-strong: #000000;
+      --btn-hero-bg: #ffffff;
+      --btn-hero-text: #000000;
+      --btn-hero-hover-bg: transparent;
+      --btn-hero-hover-text: #ffffff;
+      --btn-outline-border: #666666;
+      --btn-outline-hover: #ffffff;
+      --step-bg: #000000;
+      --step-text: #ffffff;
+      --step-sub: #888888;
+      --spec-bg: #ffffff;
+      --footer-bg: #000000;
+      --footer-text: #666666;
+      --footer-logo: #ffffff;
+      --scan-border: #ffffff;
+      --badge-bg: rgba(255,255,255,0.1);
+      --badge-border: rgba(255,255,255,0.2);
+      --phone-btn-bg: #ffffff;
+      --phone-btn-text: #000000;
+      --list-bg: #ffffff;
+      --list-border: #e0e0e0;
+      --thumb-bg: #f0f0f0;
+      --thumb-border: #e0e0e0;
+      --a4-photo-bg: #f0f0f0;
+      --number-color: #c0c0c0;
+      --radius-btn: 0px;
+      --radius-card: 0px;
+      --radius-phone: 40px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Nav ─────────────────────────────────────── */
+
+    nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: var(--nav-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--nav-border);
+      z-index: 100;
+    }
+
+    nav .inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    nav .logo {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+
+    nav .nav-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+    }
+
+    nav .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      transition: color 0.2s;
+    }
+
+    nav .nav-links a:hover {
+      color: var(--text);
+    }
+
+    /* ── Hero ─────────────────────────────────────── */
+
+    .hero {
+      padding: 160px 24px 100px;
+      text-align: center;
+      background: var(--hero-bg);
+      color: var(--hero-text);
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 6vw, 4rem);
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 24px;
+    }
+
+    .hero .subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      color: var(--hero-sub);
+      max-width: 620px;
+      margin: 0 auto 48px;
+      font-weight: 400;
+    }
+
+    .hero .cta-group {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 36px;
+      border-radius: var(--radius-btn);
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.15s;
+      border: 2px solid transparent;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+    }
+
+    .btn-primary {
+      background: var(--btn-hero-bg);
+      color: var(--btn-hero-text);
+      border-color: var(--btn-hero-bg);
+    }
+
+    .btn-primary:hover {
+      background: var(--btn-hero-hover-bg);
+      color: var(--btn-hero-hover-text);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--hero-text);
+      border-color: var(--btn-outline-border);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--btn-outline-hover);
+    }
+
+    /* ── Phone Mockup ─────────────────────────────── */
+
+    .hero-visual {
+      margin-top: 80px;
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .phone-frame {
+      width: 260px;
+      height: 520px;
+      background: #222;
+      border-radius: var(--radius-phone);
+      padding: 10px;
+      border: 2px solid #555;
+    }
+
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      border-radius: calc(var(--radius-phone) - 8px);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-status-bar {
+      height: 44px;
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid #333;
+    }
+
+    .phone-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 20px;
+      position: relative;
+    }
+
+    .phone-content.scanner-bg {
+      background: #111;
+    }
+
+    .phone-content.list-bg {
+      background: var(--bg-alt);
+      justify-content: flex-start;
+      padding-top: 12px;
+    }
+
+    .scan-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -60%);
+      width: 160px;
+      height: 100px;
+      border: 2px solid var(--scan-border);
+      border-radius: 4px;
+    }
+
+    .scan-overlay::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--scan-border);
+      animation: scanLine 2s ease-in-out infinite;
+    }
+
+    @keyframes scanLine {
+      0%, 100% { top: 0; }
+      50% { top: calc(100% - 2px); }
+    }
+
+    .phone-badge {
+      background: var(--badge-bg);
+      border: 1px solid var(--badge-border);
+      padding: 10px 16px;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .phone-btn {
+      padding: 14px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+      background: var(--phone-btn-bg);
+      color: var(--phone-btn-text);
+    }
+
+    .list-item {
+      background: var(--list-bg);
+      border: 1px solid var(--list-border);
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .list-thumb {
+      width: 44px;
+      height: 44px;
+      background: var(--thumb-bg);
+      border: 1px solid var(--thumb-border);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text);
+      font-family: "SF Mono", "Menlo", monospace;
+    }
+
+    .list-text {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .list-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 500;
+      font-family: "SF Mono", "Menlo", monospace;
+    }
+
+    /* ── Sections ─────────────────────────────────── */
+
+    section {
+      padding: 100px 24px;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .section-header h2 {
+      font-size: clamp(1.6rem, 4vw, 2.6rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .section-header p {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
+    /* ── Features ─────────────────────────────────── */
+
+    .features-grid {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2px;
+    }
+
+    .feature-card {
+      background: var(--card-bg);
+      padding: 40px 32px;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-card);
+      transition: background 0.2s;
+    }
+
+    .feature-card:hover {
+      background: var(--card-hover);
+    }
+
+    .feature-number {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--number-color);
+      letter-spacing: 0.1em;
+      margin-bottom: 16px;
+      font-family: "SF Mono", "Menlo", monospace;
+    }
+
+    .feature-card h3 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+
+    .feature-card p {
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+      line-height: 1.8;
+    }
+
+    /* ── How it works ─────────────────────────────── */
+
+    .how-it-works {
+      background: var(--step-bg);
+      color: var(--step-text);
+    }
+
+    .how-it-works .section-header h2 {
+      color: var(--step-text);
+    }
+
+    .how-it-works .section-header p {
+      color: var(--step-sub);
+    }
+
+    .steps {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 48px;
+    }
+
+    .step {
+      text-align: center;
+    }
+
+    .step-number {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 20px;
+      border: 2px solid var(--step-text);
+      border-radius: var(--radius-btn);
+      color: var(--step-text);
+      font-size: 1.3rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "SF Mono", "Menlo", monospace;
+    }
+
+    .step h3 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .step p {
+      font-size: 0.9rem;
+      color: var(--step-sub);
+      line-height: 1.8;
+    }
+
+    /* ── Print Layout Demo ────────────────────────── */
+
+    .print-demo {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .a4-preview {
+      background: var(--bg);
+      border: 2px solid var(--border-strong);
+      padding: 36px 28px;
+      aspect-ratio: 210 / 297;
+      max-height: 560px;
+      display: flex;
+      flex-direction: column;
+      margin: 0 auto;
+      max-width: 380px;
+    }
+
+    .a4-header {
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .a4-date {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: "SF Mono", "Menlo", monospace;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border-strong);
+    }
+
+    .a4-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .a4-cell {
+      border: 1px solid var(--card-border);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .a4-cell-name {
+      font-size: 9px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .a4-cell-photo {
+      flex: 1;
+      background: var(--a4-photo-bg);
+      border: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--text);
+      font-family: "SF Mono", "Menlo", monospace;
+      min-height: 50px;
+    }
+
+    /* ── Tech Specs ───────────────────────────────── */
+
+    .specs-section {
+      background: var(--bg-alt);
+      border-top: 2px solid var(--border-strong);
+      border-bottom: 2px solid var(--border-strong);
+    }
+
+    .specs {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    .specs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2px;
+    }
+
+    .spec-item {
+      padding: 28px 20px;
+      background: var(--spec-bg);
+      border: 1px solid var(--card-border);
+      text-align: center;
+    }
+
+    .spec-item .label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .spec-item .value {
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+
+    /* ── Footer ───────────────────────────────────── */
+
+    footer {
+      background: var(--footer-bg);
+      color: var(--footer-text);
+      padding: 48px 24px;
+      text-align: center;
+    }
+
+    footer .footer-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    footer .footer-logo {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--footer-logo);
+      margin-bottom: 10px;
+    }
+
+    footer p {
+      font-size: 0.82rem;
+      line-height: 1.9;
+    }
+
+    /* ── Responsive ───────────────────────────────── */
+
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .hero { padding: 130px 20px 70px; }
+      .phone-frame { width: 220px; height: 440px; }
+      section { padding: 64px 20px; }
+      .steps { gap: 32px; }
+      .features-grid { gap: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav>
+    <div class="inner">
+      <a href="#" class="logo">お薬スキャナー</a>
+      <ul class="nav-links">
+        <li><a href="#features">機能</a></li>
+        <li><a href="#how-it-works">使い方</a></li>
+        <li><a href="#batch-print">まとめて印刷</a></li>
+        <li><a href="#specs">仕様</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1>
+      スキャン、秤量、<br>
+      そのまま印刷。
+    </h1>
+    <p class="subtitle">
+      医薬品のバーコードを読み取り、はかりの重量表示を撮影。<br>
+      薬品名と秤量記録をAirPrintで即座に印刷できます。
+    </p>
+    <div class="cta-group">
+      <a href="#how-it-works" class="btn btn-primary">使い方を見る</a>
+      <a href="#specs" class="btn btn-outline">技術仕様</a>
+    </div>
+
+    <!-- Phone mockups -->
+    <div class="hero-visual">
+      <!-- Scanner screen -->
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="phone-status-bar">お薬スキャナー</div>
+          <div class="phone-content scanner-bg">
+            <div class="scan-overlay"></div>
+            <div class="phone-badge">ロキソニンS 12錠</div>
+            <div class="phone-btn">撮影する</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Batch list screen -->
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="phone-status-bar">お薬リスト</div>
+          <div class="phone-content list-bg">
+            <div class="list-item">
+              <div class="list-thumb">12.5g</div>
+              <div>
+                <div class="list-text">ロキソニンS 12錠</div>
+                <div class="list-sub">4987123456789</div>
+              </div>
+            </div>
+            <div class="list-item">
+              <div class="list-thumb">8.2g</div>
+              <div>
+                <div class="list-text">バファリンA 20錠</div>
+                <div class="list-sub">4987234567890</div>
+              </div>
+            </div>
+            <div class="list-item">
+              <div class="list-thumb">15.0g</div>
+              <div>
+                <div class="list-text">パブロンゴールドA</div>
+                <div class="list-sub">4987345678901</div>
+              </div>
+            </div>
+            <div style="flex: 1;"></div>
+            <div class="phone-btn" style="margin-top: 12px;">まとめて印刷（3件）</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features">
+    <div class="section-header">
+      <h2>主な機能</h2>
+      <p>秤量記録の現場で必要な機能をシンプルにまとめました</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-number">01</div>
+        <h3>バーコードスキャン</h3>
+        <p>EAN-13（JAN）、EAN-8、GS1 DataBar に対応。カメラを向けるだけで瞬時に薬品名を表示します。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">02</div>
+        <h3>秤量表示の撮影</h3>
+        <p>はかりの重量表示をそのまま撮影。バーコード読み取りから秤量記録までワンフローで完結します。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">03</div>
+        <h3>AirPrint 印刷</h3>
+        <p>薬品名 + タイムスタンプ + 秤量写真を自動レイアウト。A4・ラベルの2種類のページサイズに対応。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">04</div>
+        <h3>まとめて印刷</h3>
+        <p>複数の薬品をリストに追加し、A4用紙に2列グリッドで一括印刷。件数に応じてサイズを自動調整。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how-it-works" class="how-it-works">
+    <div class="section-header">
+      <h2>3ステップで完了</h2>
+      <p>直感的な操作で誰でもすぐに使い始められます</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>スキャン</h3>
+        <p>カメラを起動して医薬品のバーコードを読み取り。薬品名が自動で表示されます。</p>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>秤量撮影</h3>
+        <p>はかりの重量表示を撮影して記録。リストに追加して次の薬品も続けてスキャンできます。</p>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>印刷</h3>
+        <p>1件ずつ、またはまとめてA4用紙にAirPrint印刷。そのまま秤量記録として保管できます。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Batch Print Demo -->
+  <section id="batch-print">
+    <div class="section-header">
+      <h2>A4 まとめて印刷</h2>
+      <p>複数の薬品の秤量記録を1枚のA4にまとめて印刷</p>
+    </div>
+    <div class="print-demo">
+      <div class="a4-preview">
+        <div class="a4-header">お薬一覧（4件）</div>
+        <div class="a4-date">2026/02/14 12:00</div>
+        <div class="a4-grid">
+          <div class="a4-cell">
+            <div class="a4-cell-name">ロキソニンS 12錠</div>
+            <div class="a4-cell-photo">12.5 g</div>
+          </div>
+          <div class="a4-cell">
+            <div class="a4-cell-name">バファリンA 20錠</div>
+            <div class="a4-cell-photo">8.2 g</div>
+          </div>
+          <div class="a4-cell">
+            <div class="a4-cell-name">パブロンゴールドA</div>
+            <div class="a4-cell-photo">15.0 g</div>
+          </div>
+          <div class="a4-cell">
+            <div class="a4-cell-name">アレグラFX 28錠</div>
+            <div class="a4-cell-photo">6.8 g</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tech Specs -->
+  <section id="specs" class="specs-section">
+    <div class="section-header">
+      <h2>技術仕様</h2>
+      <p>iOS ネイティブフレームワークのみで動作。外部依存ゼロ。</p>
+    </div>
+    <div class="specs">
+      <div class="specs-grid">
+        <div class="spec-item">
+          <div class="label">プラットフォーム</div>
+          <div class="value">iOS 16.0+</div>
+        </div>
+        <div class="spec-item">
+          <div class="label">UI</div>
+          <div class="value">SwiftUI</div>
+        </div>
+        <div class="spec-item">
+          <div class="label">カメラ</div>
+          <div class="value">AVFoundation</div>
+        </div>
+        <div class="spec-item">
+          <div class="label">バーコード</div>
+          <div class="value">EAN-13 / EAN-8 / GS1</div>
+        </div>
+        <div class="spec-item">
+          <div class="label">印刷</div>
+          <div class="value">AirPrint</div>
+        </div>
+        <div class="spec-item">
+          <div class="label">レイアウト</div>
+          <div class="value">A4 / ラベル</div>
+        </div>
+        <div class="spec-item">
+          <div class="label">設計</div>
+          <div class="value">MVVM</div>
+        </div>
+        <div class="spec-item">
+          <div class="label">外部依存</div>
+          <div class="value">なし</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">お薬スキャナー</div>
+      <p>
+        医薬品バーコード読取 &amp; 秤量記録印刷 iOS アプリ<br>
+        Swift / SwiftUI / AVFoundation
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,5 +1,23 @@
 import UIKit
 
+// MARK: - UIImage Monochrome Extension
+
+extension UIImage {
+    /// Returns a grayscale version with increased contrast, suitable for
+    /// reading scale/weight displays clearly.
+    func monochromed(contrast: CGFloat = 1.3) -> UIImage {
+        guard let ciImage = CIImage(image: self),
+              let filter = CIFilter(name: "CIColorControls") else { return self }
+        filter.setValue(ciImage, forKey: kCIInputImageKey)
+        filter.setValue(0.0, forKey: kCIInputSaturationKey)
+        filter.setValue(contrast, forKey: kCIInputContrastKey)
+        guard let output = filter.outputImage else { return self }
+        let context = CIContext()
+        guard let cgImage = context.createCGImage(output, from: output.extent) else { return self }
+        return UIImage(cgImage: cgImage, scale: scale, orientation: imageOrientation)
+    }
+}
+
 /// Generates a printable composite image combining the medicine name (text)
 /// and the captured photo into a single page layout suitable for AirPrint.
 enum PrintHelper {
@@ -28,8 +46,10 @@ enum PrintHelper {
     static func compositeImage(
         medicineName: String,
         photo: UIImage,
-        layout: PageLayout
+        layout: PageLayout,
+        monochrome: Bool = false
     ) -> UIImage? {
+        let processedPhoto = monochrome ? photo.monochromed() : photo
         let pageSize = layout.sizeInPoints
         let margin: CGFloat = 30
         let textTopPadding: CGFloat = 40
@@ -114,7 +134,7 @@ enum PrintHelper {
             let imageRect = CGRect(x: drawX, y: imageTopY,
                                    width: drawWidth, height: drawHeight)
 
-            photo.draw(in: imageRect)
+            processedPhoto.draw(in: imageRect)
         }
     }
 
@@ -125,7 +145,7 @@ enum PrintHelper {
     ///
     /// Layout: 2 columns × N rows, fitting as many items as possible on one page.
     /// If more than ~6 items, photos shrink to accommodate all entries.
-    static func compositeBatchImage(items: [ScannedItem]) -> UIImage? {
+    static func compositeBatchImage(items: [ScannedItem], monochrome: Bool = false) -> UIImage? {
         guard !items.isEmpty else { return nil }
 
         let pageSize = PageLayout.a4.sizeInPoints
@@ -214,7 +234,8 @@ enum PrintHelper {
 
                 guard photoAvailableHeight > 0 else { continue }
 
-                let photoAspect = item.photo.size.width / item.photo.size.height
+                let cellPhoto = monochrome ? item.photo.monochromed() : item.photo
+                let photoAspect = cellPhoto.size.width / cellPhoto.size.height
                 var photoWidth = photoAvailableWidth
                 var photoHeight = photoWidth / photoAspect
 
@@ -232,7 +253,7 @@ enum PrintHelper {
                 let photoClipPath = UIBezierPath(roundedRect: photoRect, cornerRadius: 6)
                 context.cgContext.saveGState()
                 photoClipPath.addClip()
-                item.photo.draw(in: photoRect)
+                cellPhoto.draw(in: photoRect)
                 context.cgContext.restoreGState()
             }
         }
@@ -245,12 +266,14 @@ enum PrintHelper {
     static func compositePDF(
         medicineName: String,
         photo: UIImage,
-        layout: PageLayout
+        layout: PageLayout,
+        monochrome: Bool = false
     ) -> Data? {
         guard let image = compositeImage(
             medicineName: medicineName,
             photo: photo,
-            layout: layout
+            layout: layout,
+            monochrome: monochrome
         ) else { return nil }
 
         let pageSize = layout.sizeInPoints
