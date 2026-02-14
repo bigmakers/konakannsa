@@ -195,6 +195,134 @@ enum PrintHelper {
         }
     }
 
+    // MARK: - Journal (Receipt-style) Print
+
+    /// Renders a receipt/journal-style list from history records.
+    /// Columns: 日付 | 撮影ID | 医薬品名 | 秤量数
+    static func journalImage(records: [HistoryRecord]) -> UIImage? {
+        guard !records.isEmpty else { return nil }
+
+        let pageSize = PageLayout.a4.sizeInPoints
+        let margin: CGFloat = 24
+        let renderer = UIGraphicsImageRenderer(size: pageSize)
+
+        return renderer.image { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(origin: .zero, size: pageSize))
+
+            // Title
+            let titleFont = UIFont.boldSystemFont(ofSize: 18)
+            let titleAttributes: [NSAttributedString.Key: Any] = [
+                .font: titleFont,
+                .foregroundColor: UIColor.black,
+            ]
+
+            let dateFormatter = DateFormatter()
+            dateFormatter.locale = Locale(identifier: "ja_JP")
+            dateFormatter.dateFormat = "yyyy年MM月dd日 HH:mm"
+            let now = dateFormatter.string(from: Date())
+
+            let title = "秤量ジャーナル  \(now)" as NSString
+            title.draw(at: CGPoint(x: margin, y: margin), withAttributes: titleAttributes)
+
+            let titleBottom = margin + titleFont.lineHeight + 8
+
+            // Column headers
+            let headerFont = UIFont.boldSystemFont(ofSize: 11)
+            let headerAttrs: [NSAttributedString.Key: Any] = [
+                .font: headerFont,
+                .foregroundColor: UIColor.darkGray,
+            ]
+
+            // Column positions (x offsets)
+            let colDate: CGFloat = margin
+            let colID: CGFloat = margin + 120
+            let colName: CGFloat = margin + 190
+            let colWeight: CGFloat = pageSize.width - margin - 60
+
+            let headers = [
+                (colDate, "日付"),
+                (colID, "撮影ID"),
+                (colName, "医薬品名"),
+                (colWeight, "秤量(g)"),
+            ]
+            for (x, text) in headers {
+                (text as NSString).draw(at: CGPoint(x: x, y: titleBottom), withAttributes: headerAttrs)
+            }
+
+            // Header separator
+            let sepY = titleBottom + headerFont.lineHeight + 4
+            UIColor.black.setStroke()
+            let sepPath = UIBezierPath()
+            sepPath.move(to: CGPoint(x: margin, y: sepY))
+            sepPath.addLine(to: CGPoint(x: pageSize.width - margin, y: sepY))
+            sepPath.lineWidth = 1.0
+            sepPath.stroke()
+
+            // Rows
+            let rowFont = UIFont.monospacedDigitSystemFont(ofSize: 10, weight: .regular)
+            let nameFont = UIFont.systemFont(ofSize: 10)
+            let rowAttrs: [NSAttributedString.Key: Any] = [
+                .font: rowFont,
+                .foregroundColor: UIColor.black,
+            ]
+            let nameAttrs: [NSAttributedString.Key: Any] = [
+                .font: nameFont,
+                .foregroundColor: UIColor.black,
+            ]
+
+            let rowDateFormatter = DateFormatter()
+            rowDateFormatter.locale = Locale(identifier: "ja_JP")
+            rowDateFormatter.dateFormat = "M/d HH:mm"
+
+            let rowHeight: CGFloat = rowFont.lineHeight + 6
+            var y = sepY + 6
+
+            // Sort by date ascending for journal
+            let sorted = records.sorted { $0.date < $1.date }
+
+            for record in sorted {
+                if y + rowHeight > pageSize.height - margin { break }
+
+                let dateStr = rowDateFormatter.string(from: record.date) as NSString
+                dateStr.draw(at: CGPoint(x: colDate, y: y), withAttributes: rowAttrs)
+
+                let idStr = record.scanIDString as NSString
+                idStr.draw(at: CGPoint(x: colID, y: y), withAttributes: rowAttrs)
+
+                let nameStr = record.medicineName as NSString
+                let nameRect = CGRect(x: colName, y: y,
+                                      width: colWeight - colName - 8,
+                                      height: rowHeight)
+                nameStr.draw(in: nameRect, withAttributes: nameAttrs)
+
+                let weightStr = (record.weight.isEmpty ? "-" : record.weight) as NSString
+                weightStr.draw(at: CGPoint(x: colWeight, y: y), withAttributes: rowAttrs)
+
+                // Light row separator
+                let rowSepY = y + rowHeight - 1
+                UIColor(white: 0.85, alpha: 1).setStroke()
+                let rowSep = UIBezierPath()
+                rowSep.move(to: CGPoint(x: margin, y: rowSepY))
+                rowSep.addLine(to: CGPoint(x: pageSize.width - margin, y: rowSepY))
+                rowSep.lineWidth = 0.5
+                rowSep.stroke()
+
+                y += rowHeight
+            }
+
+            // Footer: total count
+            y += 8
+            let footerFont = UIFont.boldSystemFont(ofSize: 11)
+            let footerAttrs: [NSAttributedString.Key: Any] = [
+                .font: footerFont,
+                .foregroundColor: UIColor.black,
+            ]
+            let footer = "合計: \(records.count)件" as NSString
+            footer.draw(at: CGPoint(x: margin, y: y), withAttributes: footerAttrs)
+        }
+    }
+
     // MARK: - PDF Generation (alternative)
 
     static func compositePDF(

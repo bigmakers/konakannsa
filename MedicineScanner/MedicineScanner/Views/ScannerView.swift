@@ -10,12 +10,14 @@ import SwiftUI
 struct ScannerView: View {
     @StateObject private var viewModel = ScannerViewModel()
     @AppStorage("isMonochrome") private var isMonochrome = false
+    @AppStorage("cameraZoom") private var cameraZoom: Double = 2.0
+    @State private var showSettings = false
 
     var body: some View {
         NavigationStack {
             ZStack {
                 // Live camera preview + barcode scanner
-                CameraPreview(viewModel: viewModel)
+                CameraPreview(viewModel: viewModel, zoomFactor: cameraZoom)
                     .ignoresSafeArea()
                     .saturation(isMonochrome ? 0 : 1)
                     .contrast(isMonochrome ? 1.3 : 1)
@@ -134,10 +136,17 @@ struct ScannerView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    NavigationLink {
-                        HistoryView()
-                    } label: {
-                        Image(systemName: "clock.arrow.circlepath")
+                    HStack(spacing: 12) {
+                        NavigationLink {
+                            HistoryView()
+                        } label: {
+                            Image(systemName: "clock.arrow.circlepath")
+                        }
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Image(systemName: "gearshape")
+                        }
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -190,7 +199,44 @@ struct ScannerView: View {
             .navigationDestination(isPresented: $viewModel.showBatchConfirmation) {
                 BatchConfirmationView(viewModel: viewModel)
             }
+            .sheet(isPresented: $showSettings) {
+                SettingsSheet(cameraZoom: $cameraZoom)
+            }
         }
+    }
+}
+
+// MARK: - Settings Sheet
+
+struct SettingsSheet: View {
+    @Binding var cameraZoom: Double
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("カメラ設定") {
+                    Picker("ズーム倍率", selection: $cameraZoom) {
+                        Text("1x").tag(1.0)
+                        Text("2x").tag(2.0)
+                    }
+                    .pickerStyle(.segmented)
+                }
+                Section {
+                    Text("ズーム倍率はアプリを再起動すると反映されます。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .navigationTitle("設定")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("閉じる") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium])
     }
 }
 
@@ -207,10 +253,11 @@ extension Notification.Name {
 /// photo capture, bridging the results back to `ScannerViewModel`.
 struct CameraPreview: UIViewRepresentable {
     @ObservedObject var viewModel: ScannerViewModel
+    var zoomFactor: Double
 
     func makeUIView(context: Context) -> UIView {
         let view = UIView(frame: .zero)
-        context.coordinator.setupSession(in: view)
+        context.coordinator.setupSession(in: view, zoom: zoomFactor)
         return view
     }
 
@@ -251,7 +298,7 @@ struct CameraPreview: UIViewRepresentable {
             session.stopRunning()
         }
 
-        func setupSession(in view: UIView) {
+        func setupSession(in view: UIView, zoom: Double) {
             guard let device = AVCaptureDevice.default(.builtInWideAngleCamera,
                                                         for: .video,
                                                         position: .back),
@@ -263,19 +310,34 @@ struct CameraPreview: UIViewRepresentable {
                 return
             }
 
-            // Configure camera for close-up / zoomed-in text capture
+            // Configure camera for close-up / zoomed-in capture
             do {
                 try device.lockForConfiguration()
-                // Zoom in (2x) for close-up text reading
-                let desiredZoom: CGFloat = 2.0
+
+                // Apply user-selected zoom level
+                let desiredZoom = CGFloat(zoom)
                 device.videoZoomFactor = min(desiredZoom, device.activeFormat.videoMaxZoomFactor)
-                // Focus on near objects (scale displays, labels)
+
+                // Near-field focus priority
                 if device.isAutoFocusRangeRestrictionSupported {
                     device.autoFocusRangeRestriction = .near
                 }
                 if device.isFocusModeSupported(.continuousAutoFocus) {
                     device.focusMode = .continuousAutoFocus
                 }
+                // Lock focus to near distance for macro-like behaviour
+                if device.isFocusPointOfInterestSupported {
+                    device.focusPointOfInterest = CGPoint(x: 0.5, y: 0.5)
+                }
+                // Set minimum focus distance if available (iOS 15+)
+                if #available(iOS 15.0, *) {
+                    // Use the smallest focus distance the device supports
+                    let minDistance = device.minimumFocusDistance
+                    // minimumFocusDistance is read-only; autoFocusRangeRestriction = .near
+                    // already covers this. Log for debugging.
+                    _ = minDistance
+                }
+
                 device.unlockForConfiguration()
             } catch {
                 // Continue even if camera config fails

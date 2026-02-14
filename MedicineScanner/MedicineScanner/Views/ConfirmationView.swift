@@ -38,68 +38,96 @@ struct ConfirmationView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
 
-                // Weight display
-                HStack(spacing: 8) {
-                    Image(systemName: "scalemass.fill")
-                        .font(.title2)
-                        .foregroundStyle(.secondary)
-                    Text(weight.isEmpty ? "0" : weight)
-                        .font(.system(size: 44, weight: .bold, design: .rounded).monospacedDigit())
-                        .foregroundStyle(weight.isEmpty ? .secondary : .primary)
-                    Text("g")
-                        .font(.title2)
-                        .foregroundStyle(.secondary)
-                }
+                // Photo (left) + Numpad (right) side by side
+                HStack(alignment: .top, spacing: 12) {
+                    // Photo + retake button
+                    ZStack(alignment: .bottomTrailing) {
+                        Image(uiImage: photo)
+                            .resizable()
+                            .scaledToFit()
+                            .saturation(isMonochrome ? 0 : 1)
+                            .contrast(isMonochrome ? 1.3 : 1)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .shadow(radius: 4)
 
-                // Inline number buttons (horizontal)
-                HStack(spacing: 6) {
-                    ForEach(["1","2","3","4","5","6","7","8","9","0","."], id: \.self) { key in
                         Button {
-                            tapKey(key)
+                            if let onRetake {
+                                dismiss()
+                                onRetake()
+                            }
                         } label: {
-                            Text(key)
-                                .font(.system(size: 20, weight: .semibold, design: .rounded))
-                                .frame(width: 28, height: 40)
-                                .background(Color(.systemGray5), in: RoundedRectangle(cornerRadius: 8))
+                            Label("再撮影", systemImage: "camera.fill")
+                                .font(.caption.bold())
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(.ultraThinMaterial, in: Capsule())
                         }
-                        .buttonStyle(.plain)
+                        .padding(6)
                     }
-                    Button {
-                        if !weight.isEmpty { weight.removeLast() }
-                    } label: {
-                        Image(systemName: "delete.backward.fill")
-                            .font(.system(size: 18))
-                            .frame(width: 28, height: 40)
-                            .background(Color(.systemGray4), in: RoundedRectangle(cornerRadius: 8))
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 12)
+                    .frame(maxWidth: .infinity)
 
-                // Photo + retake button
-                ZStack(alignment: .bottomTrailing) {
-                    Image(uiImage: photo)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxHeight: 220)
-                        .saturation(isMonochrome ? 0 : 1)
-                        .contrast(isMonochrome ? 1.3 : 1)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .shadow(radius: 4)
-
-                    Button {
-                        if let onRetake {
-                            dismiss()
-                            onRetake()
+                    // Weight display + numpad
+                    VStack(spacing: 8) {
+                        // Weight display
+                        HStack(spacing: 4) {
+                            Image(systemName: "scalemass.fill")
+                                .font(.title3)
+                                .foregroundStyle(.secondary)
+                            Text(weight.isEmpty ? "0" : weight)
+                                .font(.system(size: 32, weight: .bold, design: .rounded).monospacedDigit())
+                                .foregroundStyle(weight.isEmpty ? .secondary : .primary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.6)
+                            Text("g")
+                                .font(.title3)
+                                .foregroundStyle(.secondary)
                         }
-                    } label: {
-                        Label("再撮影", systemImage: "camera.fill")
-                            .font(.subheadline.bold())
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .background(.ultraThinMaterial, in: Capsule())
+
+                        // Numpad grid (4 rows x 3 columns)
+                        let keys = [
+                            ["7","8","9"],
+                            ["4","5","6"],
+                            ["1","2","3"],
+                            [".","0","⌫"],
+                        ]
+                        VStack(spacing: 4) {
+                            ForEach(keys, id: \.self) { row in
+                                HStack(spacing: 4) {
+                                    ForEach(row, id: \.self) { key in
+                                        Button {
+                                            if key == "⌫" {
+                                                if !weight.isEmpty { weight.removeLast() }
+                                            } else {
+                                                tapKey(key)
+                                            }
+                                        } label: {
+                                            Text(key)
+                                                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                                                .frame(maxWidth: .infinity)
+                                                .frame(height: 44)
+                                                .background(
+                                                    key == "⌫"
+                                                        ? Color(.systemGray4)
+                                                        : Color(.systemGray5),
+                                                    in: RoundedRectangle(cornerRadius: 8)
+                                                )
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                            }
+                        }
+
+                        // Clear button
+                        Button {
+                            weight = ""
+                        } label: {
+                            Text("クリア")
+                                .font(.caption.bold())
+                                .foregroundStyle(.red)
+                        }
                     }
-                    .padding(8)
+                    .frame(width: 160)
                 }
                 .padding(.horizontal)
 

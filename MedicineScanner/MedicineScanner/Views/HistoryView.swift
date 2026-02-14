@@ -9,25 +9,53 @@ struct HistoryView: View {
     @State private var isPrinting = false
     @State private var printError: String?
 
+    // Search by scanID
+    @State private var searchText = ""
+    @State private var foundRecord: HistoryRecord?
+    @State private var showPhotoDetail = false
+    @State private var searchNotFound = false
+
     var body: some View {
-        Group {
+        VStack(spacing: 0) {
+            // ScanID search bar
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField("撮影IDで検索", text: $searchText)
+                    .keyboardType(.numberPad)
+                    .textFieldStyle(.roundedBorder)
+                Button("検索") {
+                    performSearch()
+                }
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
+                .disabled(searchText.isEmpty)
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+
             if records.isEmpty {
+                Spacer()
                 VStack(spacing: 12) {
-                    Spacer()
                     Image(systemName: "clock.badge.xmark")
                         .font(.system(size: 48))
                         .foregroundStyle(.secondary)
                     Text("履歴はありません")
                         .font(.headline)
                         .foregroundStyle(.secondary)
-                    Spacer()
                 }
+                Spacer()
             } else {
                 List {
                     ForEach(groupedByDate, id: \.key) { group in
                         Section(group.key) {
                             ForEach(group.records) { record in
                                 HistoryRow(record: record, isMonochrome: isMonochrome)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        foundRecord = record
+                                        showPhotoDetail = true
+                                    }
                                     .swipeActions(edge: .trailing) {
                                         Button(role: .destructive) {
                                             HistoryStore.delete(record)
@@ -54,12 +82,20 @@ struct HistoryView: View {
         .navigationTitle("印刷履歴")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if !records.isEmpty {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("全削除", role: .destructive) {
-                        showDeleteAllAlert = true
+            ToolbarItem(placement: .topBarTrailing) {
+                HStack(spacing: 12) {
+                    if !records.isEmpty {
+                        Button {
+                            printJournal()
+                        } label: {
+                            Image(systemName: "doc.text")
+                        }
+
+                        Button("全削除", role: .destructive) {
+                            showDeleteAllAlert = true
+                        }
+                        .foregroundStyle(.red)
                     }
-                    .foregroundStyle(.red)
                 }
             }
         }
@@ -80,7 +116,32 @@ struct HistoryView: View {
         } message: {
             Text(printError ?? "")
         }
+        .alert("見つかりません", isPresented: $searchNotFound) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("撮影ID「\(searchText)」に一致する記録はありません。")
+        }
+        .sheet(isPresented: $showPhotoDetail) {
+            if let record = foundRecord {
+                PhotoDetailSheet(record: record, isMonochrome: isMonochrome)
+            }
+        }
         .onAppear { reload() }
+    }
+
+    // MARK: - Search
+
+    private func performSearch() {
+        guard let scanID = Int(searchText) else {
+            searchNotFound = true
+            return
+        }
+        if let record = HistoryStore.find(byScanID: scanID) {
+            foundRecord = record
+            showPhotoDetail = true
+        } else {
+            searchNotFound = true
+        }
     }
 
     // MARK: - Grouping
@@ -146,6 +207,33 @@ struct HistoryView: View {
             }
         }
     }
+
+    // MARK: - Journal Print
+
+    private func printJournal() {
+        isPrinting = true
+
+        guard let journalImage = PrintHelper.journalImage(records: records) else {
+            printError = "ジャーナル印刷用レイアウトの生成に失敗しました。"
+            isPrinting = false
+            return
+        }
+
+        let printController = UIPrintInteractionController.shared
+        let printInfo = UIPrintInfo.printInfo()
+        printInfo.outputType = .general
+        printInfo.jobName = "秤量ジャーナル"
+
+        printController.printInfo = printInfo
+        printController.printingItem = journalImage
+
+        printController.present(animated: true) { _, _, error in
+            isPrinting = false
+            if let error {
+                printError = error.localizedDescription
+            }
+        }
+    }
 }
 
 // MARK: - Row
@@ -184,10 +272,15 @@ private struct HistoryRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(record.medicineName)
                     .font(.body.bold())
-                if !record.weight.isEmpty {
-                    Text("\(record.weight)g")
-                        .font(.subheadline.monospacedDigit())
-                        .foregroundStyle(.orange)
+                HStack(spacing: 8) {
+                    Text("#\(record.scanIDString)")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.blue)
+                    if !record.weight.isEmpty {
+                        Text("\(record.weight)g")
+                            .font(.subheadline.monospacedDigit())
+                            .foregroundStyle(.orange)
+                    }
                 }
                 Text(Self.timeFormatter.string(from: record.date))
                     .font(.caption)
@@ -197,6 +290,82 @@ private struct HistoryRow: View {
             Spacer()
         }
         .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Photo Detail Sheet
+
+struct PhotoDetailSheet: View {
+    let record: HistoryRecord
+    let isMonochrome: Bool
+    @Environment(\.dismiss) private var dismiss
+
+    private static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ja_JP")
+        f.dateFormat = "yyyy年M月d日 HH:mm"
+        return f
+    }()
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 16) {
+                    Text(record.medicineName)
+                        .font(.title2.bold())
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+
+                    HStack(spacing: 16) {
+                        Label("#\(record.scanIDString)", systemImage: "number")
+                            .font(.subheadline.monospacedDigit())
+                            .foregroundStyle(.blue)
+                        if !record.weight.isEmpty {
+                            Label("\(record.weight)g", systemImage: "scalemass.fill")
+                                .font(.subheadline.monospacedDigit())
+                                .foregroundStyle(.orange)
+                        }
+                    }
+
+                    Text(Self.dateFormatter.string(from: record.date))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    if let photo = record.photo {
+                        Image(uiImage: photo)
+                            .resizable()
+                            .scaledToFit()
+                            .saturation(isMonochrome ? 0 : 1)
+                            .contrast(isMonochrome ? 1.3 : 1)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .shadow(radius: 4)
+                            .padding(.horizontal)
+                    } else {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemGray5))
+                            .frame(height: 200)
+                            .overlay {
+                                VStack {
+                                    Image(systemName: "photo")
+                                        .font(.largeTitle)
+                                    Text("写真が見つかりません")
+                                        .font(.caption)
+                                }
+                                .foregroundStyle(.secondary)
+                            }
+                            .padding(.horizontal)
+                    }
+                }
+                .padding(.top, 20)
+            }
+            .navigationTitle("撮影ID: \(record.scanIDString)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("閉じる") { dismiss() }
+                }
+            }
+        }
     }
 }
 

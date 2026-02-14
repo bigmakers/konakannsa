@@ -8,6 +8,8 @@ struct HistoryRecord: Codable, Identifiable {
     let weight: String
     let photoFileName: String
     let date: Date
+    /// Short numeric ID for receipt/journal printing and search.
+    let scanID: Int
 
     /// Returns the full file URL for the stored photo.
     var photoURL: URL {
@@ -17,6 +19,11 @@ struct HistoryRecord: Codable, Identifiable {
     /// Loads the photo from disk (may return nil if file was deleted).
     var photo: UIImage? {
         UIImage(contentsOfFile: photoURL.path)
+    }
+
+    /// Formatted scanID for display (zero-padded 6 digits).
+    var scanIDString: String {
+        String(format: "%06d", scanID)
     }
 }
 
@@ -73,13 +80,16 @@ enum HistoryStore {
             try? data.write(to: fileURL)
         }
 
+        let nextID = nextScanID()
+
         let record = HistoryRecord(
             id: id,
             barcode: barcode,
             medicineName: medicineName,
             weight: weight,
             photoFileName: fileName,
-            date: Date()
+            date: Date(),
+            scanID: nextID
         )
 
         var records = readJSON()
@@ -92,6 +102,12 @@ enum HistoryStore {
         for item in items {
             save(barcode: item.barcode, medicineName: item.medicineName, weight: item.weight, photo: item.photo)
         }
+    }
+
+    /// Finds a record by its scanID.
+    static func find(byScanID scanID: Int) -> HistoryRecord? {
+        let records = readJSON()
+        return records.first { $0.scanID == scanID }
     }
 
     /// Deletes a single history record.
@@ -125,5 +141,11 @@ enum HistoryStore {
     private static func writeJSON(_ records: [HistoryRecord]) {
         guard let data = try? JSONEncoder().encode(records) else { return }
         try? data.write(to: jsonURL, options: .atomic)
+    }
+
+    private static func nextScanID() -> Int {
+        let records = readJSON()
+        let maxID = records.map(\.scanID).max() ?? 0
+        return maxID + 1
     }
 }
