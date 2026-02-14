@@ -26,26 +26,8 @@ struct ScannerView: View {
 
                 // Overlay UI
                 VStack(spacing: 0) {
-                    // Top bar: buttons on camera overlay
+                    // Top bar: batch count badge
                     HStack(spacing: 8) {
-                        // Color/Mono toggle
-                        Button {
-                            isMonochrome.toggle()
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: isMonochrome
-                                      ? "circle.lefthalf.filled"
-                                      : "paintpalette.fill")
-                                    .font(.caption)
-                                Text(isMonochrome ? "白黒" : "カラー")
-                                    .font(.caption.bold())
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 4))
-                            .foregroundStyle(.white)
-                        }
-
                         Spacer()
 
                         // Batch count badge
@@ -228,7 +210,7 @@ struct ScannerView: View {
                 BatchConfirmationView(viewModel: viewModel)
             }
             .sheet(isPresented: $showSettings) {
-                SettingsSheet(cameraZoom: $cameraZoom, store: store)
+                SettingsSheet(store: store)
             }
             .sheet(isPresented: $showPaywall) {
                 PaywallView(store: store)
@@ -240,32 +222,33 @@ struct ScannerView: View {
 // MARK: - Settings Sheet
 
 struct SettingsSheet: View {
-    @Binding var cameraZoom: Double
     @ObservedObject var store: StoreManager
-    @AppStorage("journalLayout") private var journalLayout: String = "a4"
+    @AppStorage("isMonochrome") private var isMonochrome = false
     @Environment(\.dismiss) private var dismiss
     @State private var showPaywall = false
+    @State private var showManual = false
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("カメラ設定") {
-                    Picker("ズーム倍率", selection: $cameraZoom) {
-                        Text("1x").tag(1.0)
-                        Text("2x").tag(2.0)
+                    Picker("カラーモード", selection: $isMonochrome) {
+                        Text("カラー").tag(false)
+                        Text("白黒ハイコントラスト").tag(true)
                     }
                     .pickerStyle(.segmented)
 
-                    Text("ズーム倍率はアプリを再起動すると反映されます。")
+                    Text("白黒モードは秤量表示の視認性が向上します。")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Section("ジャーナル印刷") {
-                    Picker("用紙サイズ", selection: $journalLayout) {
-                        Text("A4").tag("a4")
-                        Text("レシート（58mm）").tag("receipt")
+
+                Section("使い方") {
+                    Button {
+                        showManual = true
+                    } label: {
+                        Label("説明書を見る", systemImage: "book.fill")
                     }
-                    .pickerStyle(.segmented)
                 }
 
                 Section("プラン") {
@@ -311,8 +294,117 @@ struct SettingsSheet: View {
             .sheet(isPresented: $showPaywall) {
                 PaywallView(store: store)
             }
+            .sheet(isPresented: $showManual) {
+                ManualSheet()
+            }
         }
         .presentationDetents([.medium, .large])
+    }
+}
+
+// MARK: - Manual Sheet
+
+struct ManualSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    manualSection(
+                        icon: "barcode.viewfinder",
+                        title: "バーコードスキャン",
+                        steps: [
+                            "医薬品のバーコード（JAN/GS1）にカメラを向けます",
+                            "自動でバーコードを読み取り、薬品名を表示します",
+                            "未登録のバーコードは薬品名を入力して登録できます",
+                        ]
+                    )
+
+                    manualSection(
+                        icon: "hand.tap.fill",
+                        title: "タップフォーカス",
+                        steps: [
+                            "カメラ画面をタップすると、その位置にピントを合わせます",
+                            "秤量の数字が読みにくい場合にご利用ください",
+                        ]
+                    )
+
+                    manualSection(
+                        icon: "camera.fill",
+                        title: "撮影と秤量入力",
+                        steps: [
+                            "「撮影する」ボタンで写真を撮影します",
+                            "テンキーで秤量値（g）を入力します",
+                            "「リストに追加して次へ」で次の薬品をスキャンできます",
+                        ]
+                    )
+
+                    manualSection(
+                        icon: "printer.fill",
+                        title: "印刷",
+                        steps: [
+                            "1件ずつ、またはリストにまとめて印刷できます",
+                            "「写真付き印刷」は薬品名・ID・秤量・写真を一覧印刷します",
+                            "「ジャーナル印刷」は日付・ID・薬品名・秤量のリストを印刷します",
+                            "AirPrint対応プリンターが必要です",
+                        ]
+                    )
+
+                    manualSection(
+                        icon: "clock.arrow.circlepath",
+                        title: "履歴",
+                        steps: [
+                            "過去7日間のスキャン履歴を確認できます",
+                            "撮影IDで検索できます",
+                            "左スワイプで削除、右スワイプで再印刷ができます",
+                        ]
+                    )
+
+                    manualSection(
+                        icon: "circle.lefthalf.filled",
+                        title: "白黒ハイコントラスト",
+                        steps: [
+                            "設定のカメラ設定から切り替えられます",
+                            "秤量表示の読み取り精度が向上します",
+                            "印刷時にも白黒で出力されます",
+                        ]
+                    )
+                }
+                .padding(20)
+            }
+            .navigationTitle("説明書")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("閉じる") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private func manualSection(icon: String, title: String, steps: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(title, systemImage: icon)
+                .font(.subheadline.bold())
+
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
+                    HStack(alignment: .top, spacing: 8) {
+                        Text("\(index + 1).")
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .frame(width: 16, alignment: .trailing)
+                        Text(step)
+                            .font(.caption)
+                    }
+                }
+            }
+            .padding(.leading, 4)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.systemGray6), in: RoundedRectangle(cornerRadius: 6))
     }
 }
 
