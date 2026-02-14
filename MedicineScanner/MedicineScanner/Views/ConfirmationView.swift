@@ -1,0 +1,113 @@
+import SwiftUI
+
+/// Preview screen showing the captured photo alongside the medicine name.
+/// Provides a "Confirm & Print" button that composites both into a printable
+/// layout and presents the system AirPrint dialog.
+struct ConfirmationView: View {
+    let photo: UIImage
+    let medicineName: String
+
+    /// Called after the user finishes (or cancels) the print flow so
+    /// the parent can reset the scanner.
+    var onDone: () -> Void
+
+    @State private var isPrinting = false
+    @State private var printError: String?
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text(medicineName)
+                .font(.title2.bold())
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+
+            Image(uiImage: photo)
+                .resizable()
+                .scaledToFit()
+                .frame(maxHeight: 400)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .shadow(radius: 4)
+                .padding(.horizontal)
+
+            Spacer()
+
+            Button {
+                printCombinedLayout()
+            } label: {
+                Label("Confirm & Print", systemImage: "printer.fill")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.accentColor)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+            .padding(.horizontal, 40)
+            .disabled(isPrinting)
+
+            Button("Back to Scanner") {
+                dismiss()
+                onDone()
+            }
+            .font(.subheadline)
+            .padding(.bottom, 8)
+        }
+        .padding(.top, 20)
+        .navigationTitle("Confirm")
+        .navigationBarTitleDisplayMode(.inline)
+        .alert("Print Error", isPresented: .init(
+            get: { printError != nil },
+            set: { if !$0 { printError = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(printError ?? "")
+        }
+    }
+
+    // MARK: - Printing
+
+    private func printCombinedLayout() {
+        isPrinting = true
+
+        guard let printableImage = PrintHelper.compositeImage(
+            medicineName: medicineName,
+            photo: photo,
+            layout: .a4
+        ) else {
+            printError = "Failed to generate printable layout."
+            isPrinting = false
+            return
+        }
+
+        let printController = UIPrintInteractionController.shared
+        let printInfo = UIPrintInfo.printInfo()
+        printInfo.outputType = .general
+        printInfo.jobName = "Medicine – \(medicineName)"
+
+        printController.printInfo = printInfo
+        printController.printingItem = printableImage
+
+        printController.present(animated: true) { _, completed, error in
+            isPrinting = false
+            if let error {
+                printError = error.localizedDescription
+            } else if completed {
+                dismiss()
+                onDone()
+            }
+        }
+    }
+}
+
+// MARK: - Preview
+
+#Preview {
+    NavigationStack {
+        ConfirmationView(
+            photo: UIImage(systemName: "pill.fill")!,
+            medicineName: "ロキソニンS 12錠"
+        ) {}
+    }
+}
