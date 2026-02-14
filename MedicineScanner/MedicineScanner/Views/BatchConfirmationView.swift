@@ -5,16 +5,11 @@ import SwiftUI
 struct BatchConfirmationView: View {
     @ObservedObject var viewModel: ScannerViewModel
     @AppStorage("isMonochrome") private var isMonochrome = false
-    @AppStorage("journalLayout") private var journalLayout: String = "a4"
     @Environment(\.dismiss) private var dismiss
 
     @State private var isPrinting = false
     @State private var printError: String?
     @State private var showPrintChoice = false
-
-    private var selectedJournalLayout: PrintHelper.PageLayout {
-        journalLayout == "receipt" ? .receipt58mm : .a4
-    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -82,6 +77,20 @@ struct BatchConfirmationView: View {
                 .disabled(isPrinting || viewModel.scannedItems.isEmpty)
 
                 Button {
+                    saveWithoutPrinting()
+                } label: {
+                    Label("記録だけ残す", systemImage: "square.and.arrow.down")
+                        .font(.subheadline.bold())
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color(.systemGray5))
+                        .foregroundStyle(.primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
+                .padding(.horizontal, 40)
+                .disabled(isPrinting || viewModel.scannedItems.isEmpty)
+
+                Button {
                     dismiss()
                 } label: {
                     Label("スキャナーに戻る", systemImage: "barcode.viewfinder")
@@ -126,11 +135,11 @@ struct BatchConfirmationView: View {
                 printBatchWithPhotos()
             }
             Button("ジャーナル印刷") {
-                printBatchJournal(layout: selectedJournalLayout)
+                printBatchJournal()
             }
             Button("キャンセル", role: .cancel) {}
         } message: {
-            Text("写真付き: 写真・薬品名・秤量を一覧印刷\nジャーナル: 日付・撮影ID・薬品名・秤量のリスト（\(journalLayout == "receipt" ? "レシート" : "A4")）")
+            Text("写真付き: 写真・薬品名・秤量を一覧印刷\nジャーナル: 日付・撮影ID・薬品名・秤量のリスト")
         }
     }
 
@@ -180,7 +189,7 @@ struct BatchConfirmationView: View {
 
     // MARK: - Batch Printing (Journal)
 
-    private func printBatchJournal(layout: PrintHelper.PageLayout = .a4) {
+    private func printBatchJournal() {
         isPrinting = true
 
         // Save to history first so each item gets a scanID
@@ -190,7 +199,7 @@ struct BatchConfirmationView: View {
         let allRecords = HistoryStore.loadAll()
         let recentRecords = Array(allRecords.prefix(viewModel.scannedItems.count))
 
-        guard let journalImage = PrintHelper.journalImage(records: recentRecords, layout: layout) else {
+        guard let journalImage = PrintHelper.journalImage(records: recentRecords, layout: .a4) else {
             printError = "ジャーナル印刷用レイアウトの生成に失敗しました。"
             isPrinting = false
             return
@@ -213,6 +222,14 @@ struct BatchConfirmationView: View {
                 dismiss()
             }
         }
+    }
+
+    // MARK: - Save Without Printing
+
+    private func saveWithoutPrinting() {
+        HistoryStore.saveBatch(viewModel.scannedItems)
+        viewModel.resetAll()
+        dismiss()
     }
 }
 
