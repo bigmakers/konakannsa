@@ -1,17 +1,14 @@
 import SwiftUI
 
-/// Preview screen showing the captured photo alongside the medicine name and
-/// OCR-recognized weight. Provides options to print a single item, or add it
-/// to the batch list for multi-medicine printing.
+/// Preview screen showing the captured photo alongside the medicine name.
+/// Provides options to print a single item, or add it to the batch list
+/// for multi-medicine printing.
 struct ConfirmationView: View {
     let photo: UIImage
     let medicineName: String
 
-    /// Binding to the OCR-recognized weight value (editable).
+    /// Binding to the weight value (manual input).
     @Binding var weight: String
-
-    /// Whether OCR is currently in progress.
-    var isRecognizingWeight: Bool = false
 
     /// Whether monochrome (B&W high-contrast) mode is active.
     var isMonochrome: Bool = false
@@ -37,26 +34,18 @@ struct ConfirmationView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
 
-            // Weight display / edit
+            // Weight manual input
             HStack(spacing: 8) {
                 Image(systemName: "scalemass.fill")
                     .foregroundStyle(.secondary)
-                if isRecognizingWeight {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text("読み取り中...")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                } else {
-                    TextField("秤の数値", text: $weight)
-                        .font(.title3.monospacedDigit())
-                        .textFieldStyle(.roundedBorder)
-                        .keyboardType(.decimalPad)
-                        .frame(maxWidth: 160)
-                    Text("g")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
-                }
+                TextField("秤の数値", text: $weight)
+                    .font(.title3.monospacedDigit())
+                    .textFieldStyle(.roundedBorder)
+                    .keyboardType(.decimalPad)
+                    .frame(maxWidth: 160)
+                Text("g")
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
             }
             .padding(.horizontal)
 

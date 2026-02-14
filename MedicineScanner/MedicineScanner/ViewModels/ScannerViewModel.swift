@@ -59,11 +59,8 @@ final class ScannerViewModel: ObservableObject {
     /// Text field binding for the registration alert.
     @Published var registrationName = ""
 
-    /// OCR result from scale reading.
+    /// Manual weight input.
     @Published var recognizedWeight: String = ""
-
-    /// Whether OCR is currently running.
-    @Published var isRecognizingWeight = false
 
     // MARK: - Barcode Handling
 
@@ -101,18 +98,9 @@ final class ScannerViewModel: ObservableObject {
     }
 
     /// Called by the camera coordinator when a photo is captured.
-    /// Runs OCR on the photo to extract scale numbers, then shows confirmation.
     func didCapturePhoto(_ image: UIImage) {
         capturedPhoto = image
-        isRecognizingWeight = true
-        recognizedWeight = ""
-
-        Task {
-            let result = await OCRService.recognizeNumber(from: image)
-            self.recognizedWeight = result ?? ""
-            self.isRecognizingWeight = false
-            self.showConfirmation = true
-        }
+        showConfirmation = true
     }
 
     // MARK: - Batch Management
@@ -143,7 +131,6 @@ final class ScannerViewModel: ObservableObject {
         scannedBarcode = nil
         capturedPhoto = nil
         recognizedWeight = ""
-        isRecognizingWeight = false
         showConfirmation = false
         isScanningActive = true
     }

@@ -167,7 +167,6 @@ struct ScannerView: View {
                         photo: photo,
                         medicineName: name,
                         weight: $viewModel.recognizedWeight,
-                        isRecognizingWeight: viewModel.isRecognizingWeight,
                         isMonochrome: isMonochrome,
                         batchCount: viewModel.scannedItems.count,
                         onAddToList: {
@@ -252,6 +251,24 @@ struct CameraPreview: UIViewRepresentable {
                     viewModel.errorMessage = "この端末ではカメラを利用できません。"
                 }
                 return
+            }
+
+            // Configure camera for close-up / zoomed-in text capture
+            do {
+                try device.lockForConfiguration()
+                // Zoom in (2x) for close-up text reading
+                let desiredZoom: CGFloat = 2.0
+                device.videoZoomFactor = min(desiredZoom, device.activeFormat.videoMaxZoomFactor)
+                // Focus on near objects (scale displays, labels)
+                if device.isAutoFocusRangeRestrictionSupported {
+                    device.autoFocusRangeRestriction = .near
+                }
+                if device.isFocusModeSupported(.continuousAutoFocus) {
+                    device.focusMode = .continuousAutoFocus
+                }
+                device.unlockForConfiguration()
+            } catch {
+                // Continue even if camera config fails
             }
 
             session.beginConfiguration()
