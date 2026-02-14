@@ -171,6 +171,9 @@ struct ScannerView: View {
                         batchCount: viewModel.scannedItems.count,
                         onAddToList: {
                             viewModel.addToListAndContinue()
+                        },
+                        onRetake: {
+                            viewModel.retakePhoto()
                         }
                     ) {
                         viewModel.resetScan()

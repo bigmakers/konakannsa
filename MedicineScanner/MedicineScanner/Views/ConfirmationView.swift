@@ -19,6 +19,9 @@ struct ConfirmationView: View {
     /// Called when the user taps "リストに追加して次へ".
     var onAddToList: (() -> Void)?
 
+    /// Called when the user taps "再撮影".
+    var onRetake: (() -> Void)?
+
     /// Called after the user finishes (or cancels) the print flow so
     /// the parent can reset the scanner.
     var onDone: () -> Void
@@ -28,84 +31,114 @@ struct ConfirmationView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text(medicineName)
-                .font(.title2.bold())
-                .multilineTextAlignment(.center)
+        ScrollView {
+            VStack(spacing: 16) {
+                Text(medicineName)
+                    .font(.title2.bold())
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                // Weight manual input (large)
+                HStack(spacing: 12) {
+                    Image(systemName: "scalemass.fill")
+                        .font(.title)
+                        .foregroundStyle(.secondary)
+                    TextField("数値", text: $weight)
+                        .font(.system(size: 48, weight: .bold, design: .rounded).monospacedDigit())
+                        .textFieldStyle(.roundedBorder)
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 220)
+                    Text("g")
+                        .font(.title)
+                        .foregroundStyle(.secondary)
+                }
                 .padding(.horizontal)
 
-            // Weight manual input
-            HStack(spacing: 8) {
-                Image(systemName: "scalemass.fill")
-                    .foregroundStyle(.secondary)
-                TextField("秤の数値", text: $weight)
-                    .font(.title3.monospacedDigit())
-                    .textFieldStyle(.roundedBorder)
-                    .keyboardType(.decimalPad)
-                    .frame(maxWidth: 160)
-                Text("g")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal)
+                // Photo + retake button
+                ZStack(alignment: .bottomTrailing) {
+                    Image(uiImage: photo)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxHeight: 220)
+                        .saturation(isMonochrome ? 0 : 1)
+                        .contrast(isMonochrome ? 1.3 : 1)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .shadow(radius: 4)
 
-            Image(uiImage: photo)
-                .resizable()
-                .scaledToFit()
-                .frame(maxHeight: 280)
-                .saturation(isMonochrome ? 0 : 1)
-                .contrast(isMonochrome ? 1.3 : 1)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .shadow(radius: 4)
+                    Button {
+                        if let onRetake {
+                            dismiss()
+                            onRetake()
+                        }
+                    } label: {
+                        Label("再撮影", systemImage: "camera.fill")
+                            .font(.subheadline.bold())
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(.ultraThinMaterial, in: Capsule())
+                    }
+                    .padding(8)
+                }
                 .padding(.horizontal)
 
-            Spacer()
+                Spacer().frame(height: 8)
 
-            // Add to batch list button
-            if let onAddToList {
+                // Add to batch list button
+                if let onAddToList {
+                    Button {
+                        dismiss()
+                        onAddToList()
+                    } label: {
+                        Label(
+                            batchCount > 0
+                                ? "リストに追加して次へ（\(batchCount)件登録済み）"
+                                : "リストに追加して次へ",
+                            systemImage: "plus.rectangle.on.rectangle"
+                        )
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(isMonochrome ? Color.black : Color.green)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                    }
+                    .padding(.horizontal, 24)
+                }
+
+                // Single-item print button
+                Button {
+                    printCombinedLayout()
+                } label: {
+                    Label("この1件を印刷", systemImage: "printer.fill")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(isMonochrome ? Color.black : Color.accentColor)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+                .padding(.horizontal, 24)
+                .disabled(isPrinting)
+
+                // Back to scanner (large)
                 Button {
                     dismiss()
-                    onAddToList()
+                    onDone()
                 } label: {
-                    Label(
-                        batchCount > 0
-                            ? "リストに追加して次へ（\(batchCount)件登録済み）"
-                            : "リストに追加して次へ",
-                        systemImage: "plus.rectangle.on.rectangle"
-                    )
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(isMonochrome ? Color.black : Color.green)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    Label("追加せずにスキャナーに戻る", systemImage: "arrow.uturn.backward")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color(.systemGray4))
+                        .foregroundStyle(.primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
-                .padding(.horizontal, 40)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 20)
             }
-
-            // Single-item print button
-            Button {
-                printCombinedLayout()
-            } label: {
-                Label("この1件を印刷", systemImage: "printer.fill")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(isMonochrome ? Color.black : Color.accentColor)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-            }
-            .padding(.horizontal, 40)
-            .disabled(isPrinting)
-
-            Button("スキャナーに戻る") {
-                dismiss()
-                onDone()
-            }
-            .font(.subheadline)
-            .padding(.bottom, 8)
+            .padding(.top, 20)
         }
-        .padding(.top, 20)
         .navigationTitle("確認")
         .navigationBarTitleDisplayMode(.inline)
         .alert("印刷エラー", isPresented: .init(
@@ -164,7 +197,8 @@ struct ConfirmationView: View {
             medicineName: "ロキソニンS 12錠",
             weight: .constant("12.5"),
             batchCount: 2,
-            onAddToList: {}
+            onAddToList: {},
+            onRetake: {}
         ) {}
     }
 }

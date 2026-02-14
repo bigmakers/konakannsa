@@ -103,6 +103,12 @@ final class ScannerViewModel: ObservableObject {
         showConfirmation = true
     }
 
+    /// Clears the photo and returns to camera for retake (keeps barcode/name).
+    func retakePhoto() {
+        capturedPhoto = nil
+        showConfirmation = false
+    }
+
     // MARK: - Batch Management
 
     /// Adds the current scan result to the batch list and resets for the next scan.
