@@ -13,6 +13,19 @@ struct ScannedItem: Identifiable {
 @MainActor
 final class ScannerViewModel: ObservableObject {
 
+    // MARK: - Speech
+
+    private let synthesizer = AVSpeechSynthesizer()
+
+    /// Speaks the given text in Japanese.
+    private func speak(_ text: String) {
+        synthesizer.stopSpeaking(at: .immediate)
+        let utterance = AVSpeechUtterance(string: text)
+        utterance.voice = AVSpeechSynthesisVoice(language: "ja-JP")
+        utterance.rate = AVSpeechUtteranceDefaultSpeechRate
+        synthesizer.speak(utterance)
+    }
+
     // MARK: - Published State
 
     /// The medicine name resolved from the last scanned barcode.
@@ -51,6 +64,7 @@ final class ScannerViewModel: ObservableObject {
         if let name = MedicineService.medicineName(for: value) {
             medicineName = name
             isScanningActive = false
+            speak(name)
         } else {
             medicineName = nil
         }
