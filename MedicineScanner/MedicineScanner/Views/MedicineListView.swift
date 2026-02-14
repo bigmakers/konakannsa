@@ -3,48 +3,98 @@ import SwiftUI
 /// Maintenance screen for viewing and managing registered medicines.
 /// Users can edit names and delete user-registered entries.
 struct MedicineListView: View {
+    @ObservedObject var store: StoreManager
     @State private var entries: [MedicineService.MedicineEntry] = []
     @State private var editingEntry: MedicineService.MedicineEntry?
     @State private var editedName = ""
     @State private var showEditAlert = false
+    @State private var showPaywall = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        List {
-            Section("ユーザー登録") {
-                let userEntries = entries.filter { !$0.isBuiltIn }
-                if userEntries.isEmpty {
-                    Text("ユーザー登録の医薬品はありません")
+        VStack(spacing: 0) {
+            if entries.isEmpty {
+                Spacer()
+                VStack(spacing: 12) {
+                    Image(systemName: "pills")
+                        .font(.system(size: 48))
                         .foregroundStyle(.secondary)
-                } else {
-                    ForEach(userEntries) { entry in
-                        MedicineRow(entry: entry) {
-                            editingEntry = entry
-                            editedName = entry.name
-                            showEditAlert = true
+                    Text("登録された医薬品はありません")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                    Text("スキャン時に未登録バーコードを検出すると\n登録画面が表示されます")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .multilineTextAlignment(.center)
+                }
+                Spacer()
+            } else {
+                List {
+                    // Registration count
+                    if !store.isPremium {
+                        Section {
+                            HStack {
+                                Text("登録数")
+                                    .font(.subheadline)
+                                Spacer()
+                                Text("\(entries.count) / \(StoreManager.freeLimit)")
+                                    .font(.subheadline.bold().monospacedDigit())
+                                    .foregroundStyle(entries.count >= StoreManager.freeLimit ? .red : .secondary)
+                            }
+                            if entries.count >= StoreManager.freeLimit {
+                                Button("プレミアムにアップグレード（無制限）") {
+                                    showPaywall = true
+                                }
+                                .font(.subheadline)
+                            }
                         }
                     }
-                    .onDelete { indexSet in
-                        let targets = indexSet.map { userEntries[$0] }
-                        for target in targets {
-                            MedicineService.delete(barcode: target.barcode)
+
+                    Section("登録済み医薬品") {
+                        ForEach(entries) { entry in
+                            MedicineRow(entry: entry) {
+                                editingEntry = entry
+                                editedName = entry.name
+                                showEditAlert = true
+                            }
                         }
-                        reload()
+                        .onDelete { indexSet in
+                            let targets = indexSet.map { entries[$0] }
+                            for target in targets {
+                                MedicineService.delete(barcode: target.barcode)
+                            }
+                            reload()
+                        }
                     }
                 }
+                .listStyle(.insetGrouped)
             }
 
-            Section("組み込み") {
-                ForEach(entries.filter { $0.isBuiltIn }) { entry in
-                    MedicineRow(entry: entry, onTap: nil)
+            // Bottom: back to scanner button
+            VStack(spacing: 8) {
+                Divider()
+                Button {
+                    dismiss()
+                } label: {
+                    Label("スキャナーに戻る", systemImage: "barcode.viewfinder")
+                        .font(.subheadline.bold())
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.accentColor)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
                 }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 12)
             }
         }
         .navigationTitle("医薬品マスタ")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                EditButton()
+                if !entries.isEmpty {
+                    EditButton()
+                }
             }
         }
         .onAppear { reload() }
@@ -60,10 +110,13 @@ struct MedicineListView: View {
         } message: {
             Text("バーコード: \(editingEntry?.barcode ?? "")")
         }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView(store: store)
+        }
     }
 
     private func reload() {
-        entries = MedicineService.allEntries()
+        entries = MedicineService.userEntries()
     }
 }
 
@@ -82,7 +135,7 @@ private struct MedicineRow: View {
                     .font(.body.bold())
                     .foregroundStyle(.primary)
                 Text(entry.barcode)
-                    .font(.caption)
+                    .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
             .padding(.vertical, 2)
@@ -95,6 +148,6 @@ private struct MedicineRow: View {
 
 #Preview {
     NavigationStack {
-        MedicineListView()
+        MedicineListView(store: StoreManager.shared)
     }
 }

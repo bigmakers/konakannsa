@@ -9,9 +9,11 @@ import SwiftUI
 /// and print them all together on a single A4 page.
 struct ScannerView: View {
     @StateObject private var viewModel = ScannerViewModel()
+    @StateObject private var store = StoreManager.shared
     @AppStorage("isMonochrome") private var isMonochrome = false
     @AppStorage("cameraZoom") private var cameraZoom: Double = 2.0
     @State private var showSettings = false
+    @State private var showPaywall = false
 
     var body: some View {
         NavigationStack {
@@ -23,90 +25,102 @@ struct ScannerView: View {
                     .contrast(isMonochrome ? 1.3 : 1)
 
                 // Overlay UI
-                VStack {
-                    // Theme toggle (top-left) + Batch count badge (top-right)
-                    HStack {
+                VStack(spacing: 0) {
+                    // Top bar: buttons on camera overlay
+                    HStack(spacing: 8) {
+                        // Color/Mono toggle
                         Button {
                             isMonochrome.toggle()
                         } label: {
-                            HStack(spacing: 6) {
+                            HStack(spacing: 4) {
                                 Image(systemName: isMonochrome
                                       ? "circle.lefthalf.filled"
                                       : "paintpalette.fill")
+                                    .font(.caption)
                                 Text(isMonochrome ? "白黒" : "カラー")
-                                    .fontWeight(.semibold)
+                                    .font(.caption.bold())
                             }
-                            .font(.subheadline)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .background(.ultraThinMaterial, in: Capsule())
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 4))
+                            .foregroundStyle(.white)
                         }
-                        .padding(.leading, 16)
-                        .padding(.top, 8)
 
                         Spacer()
+
+                        // Batch count badge
                         if !viewModel.scannedItems.isEmpty {
                             Button {
                                 viewModel.showBatchConfirmation = true
                             } label: {
-                                HStack(spacing: 6) {
+                                HStack(spacing: 4) {
                                     Image(systemName: "list.bullet.rectangle.portrait")
+                                        .font(.caption)
                                     Text("\(viewModel.scannedItems.count)件")
-                                        .fontWeight(.semibold)
+                                        .font(.caption.bold())
                                 }
-                                .font(.subheadline)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 8)
-                                .background(.ultraThinMaterial, in: Capsule())
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 4))
+                                .foregroundStyle(.white)
                             }
-                            .padding(.trailing, 16)
-                            .padding(.top, 8)
                         }
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
 
                     Spacer()
 
                     if let name = viewModel.medicineName {
                         // Medicine badge
                         Text(name)
-                            .font(.title2.bold())
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 12)
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                            .font(.title3.bold())
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(Color.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 6))
+                            .foregroundStyle(.white)
                             .padding(.bottom, 8)
 
-                        // Take Photo button (large)
+                        // Take Photo button
                         Button {
                             viewModel.isScanningActive = false
                             NotificationCenter.default.post(name: .capturePhoto, object: nil)
                         } label: {
                             Label("撮影する", systemImage: "camera.fill")
-                                .font(.title.bold())
+                                .font(.title2.bold())
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 24)
+                                .padding(.vertical, 20)
                                 .background(isMonochrome ? Color.black : Color.accentColor)
                                 .foregroundStyle(.white)
-                                .clipShape(RoundedRectangle(cornerRadius: 18))
+                                .clipShape(RoundedRectangle(cornerRadius: 6))
                         }
                         .padding(.horizontal, 24)
                     } else if let barcode = viewModel.scannedBarcode {
                         Text("未登録: \(barcode)")
-                            .font(.subheadline)
-                            .padding(10)
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                            .font(.caption.bold())
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 4))
+                            .foregroundStyle(.white)
                     } else {
                         Text("医薬品のバーコードにカメラを向けてください")
-                            .font(.subheadline)
-                            .padding(10)
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                            .font(.caption.bold())
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 4))
+                            .foregroundStyle(.white)
                     }
 
-                    // Reset button (visible after a barcode is scanned)
+                    // Reset button
                     if viewModel.scannedBarcode != nil && !viewModel.showConfirmation {
                         Button("もう一度スキャン") {
                             viewModel.resetScan()
                         }
-                        .font(.subheadline)
+                        .font(.caption.bold())
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.black.opacity(0.5), in: RoundedRectangle(cornerRadius: 4))
                         .padding(.top, 6)
                     }
 
@@ -119,12 +133,12 @@ struct ScannerView: View {
                                 "まとめて印刷（\(viewModel.scannedItems.count)件）",
                                 systemImage: "printer.fill"
                             )
-                            .font(.headline)
+                            .font(.subheadline.bold())
                             .frame(maxWidth: .infinity)
-                            .padding()
+                            .padding(.vertical, 14)
                             .background(isMonochrome ? Color.black : Color.orange)
                             .foregroundStyle(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
                         }
                         .padding(.horizontal, 40)
                         .padding(.top, 12)
@@ -132,28 +146,33 @@ struct ScannerView: View {
                 }
                 .padding(.bottom, 40)
             }
-            .navigationTitle("お薬スキャナー")
+            .navigationTitle("鑑査スキャナー")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    HStack(spacing: 12) {
+                    HStack(spacing: 8) {
                         NavigationLink {
                             HistoryView()
                         } label: {
-                            Image(systemName: "clock.arrow.circlepath")
+                            Label("履歴", systemImage: "clock.arrow.circlepath")
+                                .font(.caption)
                         }
                         Button {
                             showSettings = true
                         } label: {
-                            Image(systemName: "gearshape")
+                            Label("設定", systemImage: "gearshape")
+                                .font(.caption)
                         }
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
-                        MedicineListView()
+                        MedicineListView(store: store)
                     } label: {
-                        Image(systemName: "list.bullet.clipboard")
+                        Label("医薬品", systemImage: "list.bullet.clipboard")
+                            .font(.caption)
                     }
                 }
             }
@@ -168,13 +187,22 @@ struct ScannerView: View {
             .alert("未登録のバーコード", isPresented: $viewModel.showRegistrationAlert) {
                 TextField("薬品名を入力", text: $viewModel.registrationName)
                 Button("登録") {
-                    viewModel.registerCurrentBarcode()
+                    if store.canRegisterMore {
+                        viewModel.registerCurrentBarcode()
+                    } else {
+                        viewModel.resetScan()
+                        showPaywall = true
+                    }
                 }
                 Button("スキップ", role: .cancel) {
                     viewModel.resetScan()
                 }
             } message: {
-                Text("バーコード「\(viewModel.scannedBarcode ?? "")」は未登録です。薬品名を入力して登録しますか？")
+                if store.canRegisterMore {
+                    Text("バーコード「\(viewModel.scannedBarcode ?? "")」は未登録です。薬品名を入力して登録しますか？")
+                } else {
+                    Text("バーコード「\(viewModel.scannedBarcode ?? "")」は未登録です。\n無料版の登録上限（\(StoreManager.freeLimit)品目）に達しています。")
+                }
             }
             .navigationDestination(isPresented: $viewModel.showConfirmation) {
                 if let photo = viewModel.capturedPhoto,
@@ -200,7 +228,10 @@ struct ScannerView: View {
                 BatchConfirmationView(viewModel: viewModel)
             }
             .sheet(isPresented: $showSettings) {
-                SettingsSheet(cameraZoom: $cameraZoom)
+                SettingsSheet(cameraZoom: $cameraZoom, store: store)
+            }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView(store: store)
             }
         }
     }
@@ -210,8 +241,10 @@ struct ScannerView: View {
 
 struct SettingsSheet: View {
     @Binding var cameraZoom: Double
+    @ObservedObject var store: StoreManager
     @AppStorage("journalLayout") private var journalLayout: String = "a4"
     @Environment(\.dismiss) private var dismiss
+    @State private var showPaywall = false
 
     var body: some View {
         NavigationStack {
@@ -234,6 +267,39 @@ struct SettingsSheet: View {
                     }
                     .pickerStyle(.segmented)
                 }
+
+                Section("プラン") {
+                    HStack {
+                        Text("ステータス")
+                        Spacer()
+                        Text(store.isPremium ? "プレミアム" : "無料")
+                            .foregroundStyle(store.isPremium ? .green : .secondary)
+                            .font(.subheadline.bold())
+                    }
+                    if !store.isPremium {
+                        let count = MedicineService.userEntries().count
+                        HStack {
+                            Text("登録数")
+                            Spacer()
+                            Text("\(count) / \(StoreManager.freeLimit)")
+                                .font(.subheadline.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
+                        Button("プレミアムにアップグレード") {
+                            showPaywall = true
+                        }
+                    }
+                    Button("購入を復元") {
+                        Task { await store.restore() }
+                    }
+                    .foregroundStyle(.secondary)
+                }
+
+                Section("寄付") {
+                    Button("開発を応援する") {
+                        showPaywall = true
+                    }
+                }
             }
             .navigationTitle("設定")
             .navigationBarTitleDisplayMode(.inline)
@@ -242,8 +308,11 @@ struct SettingsSheet: View {
                     Button("閉じる") { dismiss() }
                 }
             }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView(store: store)
+            }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.medium, .large])
     }
 }
 
@@ -258,6 +327,7 @@ extension Notification.Name {
 
 /// Wraps an `AVCaptureSession` that performs both barcode detection and still
 /// photo capture, bridging the results back to `ScannerViewModel`.
+/// Supports tap-to-focus.
 struct CameraPreview: UIViewRepresentable {
     @ObservedObject var viewModel: ScannerViewModel
     var zoomFactor: Double
@@ -292,6 +362,7 @@ struct CameraPreview: UIViewRepresentable {
         private let photoOutput = AVCapturePhotoOutput()
         private let metadataOutput = AVCaptureMetadataOutput()
         private var captureObserver: NSObjectProtocol?
+        private var device: AVCaptureDevice?
 
         init(viewModel: ScannerViewModel) {
             self.viewModel = viewModel
@@ -316,6 +387,8 @@ struct CameraPreview: UIViewRepresentable {
                 }
                 return
             }
+
+            self.device = device
 
             session.beginConfiguration()
             session.sessionPreset = .photo
@@ -381,6 +454,11 @@ struct CameraPreview: UIViewRepresentable {
             view.layer.addSublayer(layer)
             previewLayer = layer
 
+            // Tap-to-focus gesture
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+            view.addGestureRecognizer(tapGesture)
+            view.isUserInteractionEnabled = true
+
             // Start capture session on a background queue.
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 self?.session.startRunning()
@@ -393,6 +471,57 @@ struct CameraPreview: UIViewRepresentable {
                 queue: .main
             ) { [weak self] _ in
                 self?.captureStillPhoto()
+            }
+        }
+
+        // MARK: Tap to Focus
+
+        @objc func handleTap(_ gesture: UITapGestureRecognizer) {
+            guard let device = device,
+                  let previewLayer = previewLayer,
+                  let view = gesture.view else { return }
+
+            let point = gesture.location(in: view)
+            let focusPoint = previewLayer.captureDevicePointConverted(fromLayerPoint: point)
+
+            do {
+                try device.lockForConfiguration()
+                if device.isFocusPointOfInterestSupported {
+                    device.focusPointOfInterest = focusPoint
+                    device.focusMode = .autoFocus
+                }
+                if device.isExposurePointOfInterestSupported {
+                    device.exposurePointOfInterest = focusPoint
+                    device.exposureMode = .autoExpose
+                }
+                device.unlockForConfiguration()
+            } catch {}
+
+            // Visual focus indicator
+            showFocusIndicator(at: point, in: view)
+        }
+
+        private func showFocusIndicator(at point: CGPoint, in view: UIView) {
+            let size: CGFloat = 60
+            let indicator = UIView(frame: CGRect(x: 0, y: 0, width: size, height: size))
+            indicator.center = point
+            indicator.layer.borderColor = UIColor.white.cgColor
+            indicator.layer.borderWidth = 1.5
+            indicator.backgroundColor = .clear
+            view.addSubview(indicator)
+
+            indicator.transform = CGAffineTransform(scaleX: 1.4, y: 1.4)
+            indicator.alpha = 0
+
+            UIView.animate(withDuration: 0.15, animations: {
+                indicator.transform = .identity
+                indicator.alpha = 1
+            }) { _ in
+                UIView.animate(withDuration: 0.4, delay: 0.6, options: [], animations: {
+                    indicator.alpha = 0
+                }) { _ in
+                    indicator.removeFromSuperview()
+                }
             }
         }
 

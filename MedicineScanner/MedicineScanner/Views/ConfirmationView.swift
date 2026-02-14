@@ -34,7 +34,7 @@ struct ConfirmationView: View {
         ScrollView {
             VStack(spacing: 16) {
                 Text(medicineName)
-                    .font(.title2.bold())
+                    .font(.title3.bold())
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
 
@@ -47,7 +47,7 @@ struct ConfirmationView: View {
                             .scaledToFit()
                             .saturation(isMonochrome ? 0 : 1)
                             .contrast(isMonochrome ? 1.3 : 1)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
                             .shadow(radius: 4)
 
                         Button {
@@ -58,9 +58,10 @@ struct ConfirmationView: View {
                         } label: {
                             Label("再撮影", systemImage: "camera.fill")
                                 .font(.caption.bold())
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(.ultraThinMaterial, in: Capsule())
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 5)
+                                .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 4))
+                                .foregroundStyle(.white)
                         }
                         .padding(6)
                     }
@@ -109,7 +110,7 @@ struct ConfirmationView: View {
                                                     key == "⌫"
                                                         ? Color(.systemGray4)
                                                         : Color(.systemGray5),
-                                                    in: RoundedRectangle(cornerRadius: 8)
+                                                    in: RoundedRectangle(cornerRadius: 4)
                                                 )
                                         }
                                         .buttonStyle(.plain)
@@ -145,12 +146,12 @@ struct ConfirmationView: View {
                                 : "リストに追加して次へ",
                             systemImage: "plus.rectangle.on.rectangle"
                         )
-                        .font(.headline)
+                        .font(.subheadline.bold())
                         .frame(maxWidth: .infinity)
-                        .padding()
+                        .padding(.vertical, 14)
                         .background(isMonochrome ? Color.black : Color.green)
                         .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
                     }
                     .padding(.horizontal, 24)
                 }
@@ -160,28 +161,28 @@ struct ConfirmationView: View {
                     printCombinedLayout()
                 } label: {
                     Label("この1件を印刷", systemImage: "printer.fill")
-                        .font(.headline)
+                        .font(.subheadline.bold())
                         .frame(maxWidth: .infinity)
-                        .padding()
+                        .padding(.vertical, 14)
                         .background(isMonochrome ? Color.black : Color.accentColor)
                         .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
                 }
                 .padding(.horizontal, 24)
                 .disabled(isPrinting)
 
-                // Back to scanner (large)
+                // Back to scanner
                 Button {
                     dismiss()
                     onDone()
                 } label: {
-                    Label("追加せずにスキャナーに戻る", systemImage: "arrow.uturn.backward")
-                        .font(.headline)
+                    Label("追加せずにスキャナーに戻る", systemImage: "barcode.viewfinder")
+                        .font(.subheadline.bold())
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color(.systemGray4))
+                        .padding(.vertical, 14)
+                        .background(Color(.systemGray5))
                         .foregroundStyle(.primary)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 20)

@@ -6,24 +6,7 @@ struct MedicineService {
 
     // MARK: - Built-in Database
 
-    private static let builtInDatabase: [String: String] = [
-        // — Common OTC medicines (fictional JAN codes) —
-        "4987123456789": "ロキソニンS 12錠",
-        "4987234567890": "バファリンA 20錠",
-        "4987345678901": "パブロンゴールドA 44錠",
-        "4987456789012": "アレグラFX 28錠",
-        "4987567890123": "ガスター10 12錠",
-        "4987678901234": "イブクイック頭痛薬 20錠",
-        "4987789012345": "ムヒアルファEX",
-        "4987890123456": "ビオフェルミンS 45錠",
-        "4987901234567": "太田胃散 75g",
-        "4987012345678": "新ルルAゴールドDX 30錠",
-
-        // — Additional entries —
-        "4912345678904": "アリナミンEXプラス 60錠",
-        "4901234567894": "サロンパスAe 140枚",
-        "0114987120449502": "プランルカストDS１０％「タカタ」",
-    ]
+    private static let builtInDatabase: [String: String] = [:]
 
     // MARK: - User-Registered Entries (persisted)
 

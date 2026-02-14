@@ -1,0 +1,68 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="0" fill="#1A1A1A"/>
+
+  <!-- Barcode lines (vertical bars pattern) -->
+  <g fill="#FFFFFF" opacity="0.15">
+    <rect x="80" y="120" width="8" height="784"/>
+    <rect x="100" y="120" width="4" height="784"/>
+    <rect x="116" y="120" width="12" height="784"/>
+    <rect x="140" y="120" width="6" height="784"/>
+    <rect x="160" y="120" width="8" height="784"/>
+    <rect x="180" y="120" width="4" height="784"/>
+    <rect x="200" y="120" width="16" height="784"/>
+    <rect x="230" y="120" width="6" height="784"/>
+    <rect x="250" y="120" width="10" height="784"/>
+    <rect x="274" y="120" width="4" height="784"/>
+    <rect x="292" y="120" width="12" height="784"/>
+    <rect x="318" y="120" width="8" height="784"/>
+    <rect x="340" y="120" width="6" height="784"/>
+    <rect x="360" y="120" width="16" height="784"/>
+    <rect x="390" y="120" width="4" height="784"/>
+    <rect x="408" y="120" width="10" height="784"/>
+    <rect x="432" y="120" width="8" height="784"/>
+    <rect x="454" y="120" width="6" height="784"/>
+    <rect x="474" y="120" width="12" height="784"/>
+    <rect x="500" y="120" width="4" height="784"/>
+    <rect x="518" y="120" width="16" height="784"/>
+    <rect x="548" y="120" width="8" height="784"/>
+    <rect x="570" y="120" width="6" height="784"/>
+    <rect x="590" y="120" width="10" height="784"/>
+    <rect x="614" y="120" width="4" height="784"/>
+    <rect x="632" y="120" width="12" height="784"/>
+    <rect x="658" y="120" width="8" height="784"/>
+    <rect x="680" y="120" width="6" height="784"/>
+    <rect x="700" y="120" width="16" height="784"/>
+    <rect x="730" y="120" width="4" height="784"/>
+    <rect x="748" y="120" width="10" height="784"/>
+    <rect x="772" y="120" width="8" height="784"/>
+    <rect x="794" y="120" width="6" height="784"/>
+    <rect x="814" y="120" width="12" height="784"/>
+    <rect x="840" y="120" width="4" height="784"/>
+    <rect x="858" y="120" width="16" height="784"/>
+    <rect x="888" y="120" width="8" height="784"/>
+    <rect x="910" y="120" width="6" height="784"/>
+    <rect x="930" y="120" width="10" height="784"/>
+  </g>
+
+  <!-- Viewfinder corners (scanner frame) -->
+  <g stroke="#FFFFFF" stroke-width="6" fill="none" opacity="0.6">
+    <!-- Top-left corner -->
+    <path d="M 260 300 L 260 260 L 300 260"/>
+    <!-- Top-right corner -->
+    <path d="M 724 260 L 764 260 L 764 300"/>
+    <!-- Bottom-left corner -->
+    <path d="M 260 724 L 260 764 L 300 764"/>
+    <!-- Bottom-right corner -->
+    <path d="M 724 764 L 764 764 L 764 724"/>
+  </g>
+
+  <!-- Scan line -->
+  <rect x="280" y="508" width="464" height="3" fill="#FFFFFF" opacity="0.5"/>
+
+  <!-- Main text: 鑑査 -->
+  <text x="512" y="540" font-family="Hiragino Sans, Helvetica Neue, Arial" font-weight="900" font-size="200" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central">鑑査</text>
+
+  <!-- Accent line under text -->
+  <rect x="320" y="620" width="384" height="4" fill="#FFFFFF" opacity="0.3"/>
+</svg>

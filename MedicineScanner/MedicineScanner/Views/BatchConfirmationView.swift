@@ -34,7 +34,7 @@ struct BatchConfirmationView: View {
                                 .frame(width: 60, height: 60)
                                 .saturation(isMonochrome ? 0 : 1)
                                 .contrast(isMonochrome ? 1.3 : 1)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
 
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(item.medicineName)
@@ -45,7 +45,7 @@ struct BatchConfirmationView: View {
                                         .foregroundStyle(.orange)
                                 }
                                 Text(item.barcode)
-                                    .font(.caption)
+                                    .font(.caption.monospacedDigit())
                                     .foregroundStyle(.secondary)
                             }
 
@@ -71,12 +71,12 @@ struct BatchConfirmationView: View {
                         "まとめて印刷（\(viewModel.scannedItems.count)件）",
                         systemImage: "printer.fill"
                     )
-                    .font(.headline)
+                    .font(.subheadline.bold())
                     .frame(maxWidth: .infinity)
-                    .padding()
+                    .padding(.vertical, 14)
                     .background(isMonochrome ? Color.black : Color.orange)
                     .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
                 }
                 .padding(.horizontal, 40)
                 .disabled(isPrinting || viewModel.scannedItems.isEmpty)
@@ -84,13 +84,13 @@ struct BatchConfirmationView: View {
                 Button {
                     dismiss()
                 } label: {
-                    Label("スキャナーに戻る", systemImage: "arrow.uturn.backward")
-                        .font(.headline)
+                    Label("スキャナーに戻る", systemImage: "barcode.viewfinder")
+                        .font(.subheadline.bold())
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color(.systemGray4))
+                        .padding(.vertical, 14)
+                        .background(Color(.systemGray5))
                         .foregroundStyle(.primary)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
                 }
                 .padding(.horizontal, 40)
 
@@ -99,7 +99,7 @@ struct BatchConfirmationView: View {
                         viewModel.resetAll()
                         dismiss()
                     }
-                    .font(.subheadline)
+                    .font(.caption.bold())
                     .foregroundStyle(.red)
                 }
 

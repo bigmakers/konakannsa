@@ -16,6 +16,8 @@ struct HistoryView: View {
     @State private var searchNotFound = false
     @AppStorage("journalLayout") private var journalLayout: String = "a4"
 
+    @Environment(\.dismiss) private var dismiss
+
     private var selectedJournalLayout: PrintHelper.PageLayout {
         journalLayout == "receipt" ? .receipt58mm : .a4
     }
@@ -82,6 +84,24 @@ struct HistoryView: View {
                     }
                 }
                 .listStyle(.plain)
+            }
+
+            // Bottom: back to scanner button
+            VStack(spacing: 8) {
+                Divider()
+                Button {
+                    dismiss()
+                } label: {
+                    Label("スキャナーに戻る", systemImage: "barcode.viewfinder")
+                        .font(.subheadline.bold())
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.accentColor)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 12)
             }
         }
         .navigationTitle("印刷履歴")
@@ -263,9 +283,9 @@ private struct HistoryRow: View {
                     .frame(width: 56, height: 56)
                     .saturation(isMonochrome ? 0 : 1)
                     .contrast(isMonochrome ? 1.3 : 1)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
             } else {
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: 4)
                     .fill(Color(.systemGray5))
                     .frame(width: 56, height: 56)
                     .overlay {
@@ -342,11 +362,11 @@ struct PhotoDetailSheet: View {
                             .scaledToFit()
                             .saturation(isMonochrome ? 0 : 1)
                             .contrast(isMonochrome ? 1.3 : 1)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
                             .shadow(radius: 4)
                             .padding(.horizontal)
                     } else {
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: 6)
                             .fill(Color(.systemGray5))
                             .frame(height: 200)
                             .overlay {
