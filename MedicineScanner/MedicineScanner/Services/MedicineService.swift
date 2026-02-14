@@ -1,14 +1,12 @@
 import Foundation
 
 /// Service that maps barcode strings to medicine names.
-/// Uses a hardcoded dictionary for prototype/testing purposes.
+/// Built-in entries are supplemented by user-registered entries persisted in UserDefaults.
 struct MedicineService {
 
-    // MARK: - Mock Database
+    // MARK: - Built-in Database
 
-    /// EAN-13 (JAN) barcodes mapped to medicine names.
-    /// Add or modify entries here to expand the test dataset.
-    private static let database: [String: String] = [
+    private static let builtInDatabase: [String: String] = [
         // — Common OTC medicines (fictional JAN codes) —
         "4987123456789": "ロキソニンS 12錠",
         "4987234567890": "バファリンA 20錠",
@@ -21,17 +19,36 @@ struct MedicineService {
         "4987901234567": "太田胃散 75g",
         "4987012345678": "新ルルAゴールドDX 30錠",
 
-        // — Additional entries for testing —
+        // — Additional entries —
         "4912345678904": "アリナミンEXプラス 60錠",
         "4901234567894": "サロンパスAe 140枚",
+        "0114987120449502": "プランルカストDS１０％「タカタ」",
     ]
+
+    // MARK: - User-Registered Entries (persisted)
+
+    private static let userDefaultsKey = "registeredMedicines"
+
+    private static var userDatabase: [String: String] {
+        get {
+            UserDefaults.standard.dictionary(forKey: userDefaultsKey) as? [String: String] ?? [:]
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: userDefaultsKey)
+        }
+    }
 
     // MARK: - Lookup
 
-    /// Look up a medicine name by its barcode string.
-    /// - Parameter barcode: The scanned barcode value (e.g. EAN-13 digits).
-    /// - Returns: The medicine name if found, otherwise `nil`.
     static func medicineName(for barcode: String) -> String? {
-        database[barcode]
+        builtInDatabase[barcode] ?? userDatabase[barcode]
+    }
+
+    // MARK: - Registration
+
+    static func register(barcode: String, name: String) {
+        var db = userDatabase
+        db[barcode] = name
+        userDatabase = db
     }
 }

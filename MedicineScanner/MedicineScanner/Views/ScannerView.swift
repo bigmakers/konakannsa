@@ -89,7 +89,7 @@ struct ScannerView: View {
                         }
                         .padding(.horizontal, 40)
                     } else if let barcode = viewModel.scannedBarcode {
-                        Text("未登録のバーコード: \(barcode)")
+                        Text("未登録: \(barcode)")
                             .font(.subheadline)
                             .padding(10)
                             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
@@ -140,6 +140,17 @@ struct ScannerView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(viewModel.errorMessage ?? "")
+            }
+            .alert("未登録のバーコード", isPresented: $viewModel.showRegistrationAlert) {
+                TextField("薬品名を入力", text: $viewModel.registrationName)
+                Button("登録") {
+                    viewModel.registerCurrentBarcode()
+                }
+                Button("スキップ", role: .cancel) {
+                    viewModel.resetScan()
+                }
+            } message: {
+                Text("バーコード「\(viewModel.scannedBarcode ?? "")」は未登録です。薬品名を入力して登録しますか？")
             }
             .navigationDestination(isPresented: $viewModel.showConfirmation) {
                 if let photo = viewModel.capturedPhoto,

@@ -52,6 +52,12 @@ final class ScannerViewModel: ObservableObject {
     /// Accumulated list of scanned medicines for batch printing.
     @Published var scannedItems: [ScannedItem] = []
 
+    /// Controls display of the registration alert for unregistered barcodes.
+    @Published var showRegistrationAlert = false
+
+    /// Text field binding for the registration alert.
+    @Published var registrationName = ""
+
     // MARK: - Barcode Handling
 
     /// Called by the camera coordinator when a barcode is detected.
@@ -67,7 +73,24 @@ final class ScannerViewModel: ObservableObject {
             speak(name)
         } else {
             medicineName = nil
+            isScanningActive = false
+            showRegistrationAlert = true
+            registrationName = ""
         }
+    }
+
+    /// Registers the current unregistered barcode with a user-supplied name.
+    func registerCurrentBarcode() {
+        guard let barcode = scannedBarcode else { return }
+        let name = registrationName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else {
+            resetScan()
+            return
+        }
+        MedicineService.register(barcode: barcode, name: name)
+        medicineName = name
+        isScanningActive = false
+        speak(name)
     }
 
     /// Called by the camera coordinator when a photo is captured.
