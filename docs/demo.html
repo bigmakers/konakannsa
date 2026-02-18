@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>デモ用バーコード - コナモン App Review</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      color: #000;
+      background: #fff;
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
+    }
+    nav {
+      position: fixed; top: 0; width: 100%;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid #e0e0e0;
+      z-index: 100;
+    }
+    nav .inner {
+      max-width: 760px; margin: 0 auto; padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    nav .logo {
+      font-size: 1.1rem; font-weight: 800; color: #000;
+      text-decoration: none; letter-spacing: -0.02em;
+    }
+    nav .nav-links { display: flex; gap: 24px; list-style: none; }
+    nav .nav-links a {
+      color: #666; text-decoration: none; font-size: 0.85rem;
+      font-weight: 600; transition: color 0.2s;
+    }
+    nav .nav-links a:hover { color: #000; }
+    .content {
+      max-width: 760px; margin: 0 auto;
+      padding: 120px 24px 80px;
+    }
+    h1 {
+      font-size: 2rem; font-weight: 900; letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 1rem; color: #666; margin-bottom: 48px;
+    }
+    .barcode-card {
+      border: 1px solid #e0e0e0;
+      padding: 32px;
+      margin-bottom: 24px;
+      text-align: center;
+      background: #fff;
+      page-break-inside: avoid;
+    }
+    .barcode-card h3 {
+      font-size: 1.1rem; font-weight: 800; margin-bottom: 16px;
+    }
+    .barcode-card canvas {
+      display: block;
+      margin: 0 auto 12px;
+    }
+    .barcode-card .jan-code {
+      font-family: "SF Mono", "Menlo", monospace;
+      font-size: 1rem; font-weight: 600; color: #333;
+      letter-spacing: 0.15em;
+    }
+    .instructions {
+      background: #fafafa; border: 1px solid #e0e0e0;
+      padding: 28px; margin-bottom: 40px;
+    }
+    .instructions h2 {
+      font-size: 1.1rem; font-weight: 800; margin-bottom: 12px;
+    }
+    .instructions ol {
+      margin-left: 20px;
+    }
+    .instructions li {
+      font-size: 0.95rem; color: #333; margin-bottom: 8px;
+    }
+    footer {
+      background: #000; color: #666; padding: 48px 24px; text-align: center;
+    }
+    footer .footer-logo {
+      font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 10px;
+    }
+    footer p { font-size: 0.82rem; color: #666; line-height: 1.9; }
+    footer a { color: #888; }
+    @media print {
+      nav { display: none; }
+      .content { padding-top: 20px; }
+      .barcode-card { border: 2px solid #000; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="inner">
+      <a href="index.html" class="logo">コナモン</a>
+      <ul class="nav-links">
+        <li><a href="index.html">ホーム</a></li>
+        <li><a href="support.html">サポート</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="content">
+    <h1>デモ用バーコード</h1>
+    <p class="subtitle">App Review - コナモンのバーコードスキャン機能をテストするためのデモ用バーコードです</p>
+
+    <div class="instructions">
+      <h2>テスト手順</h2>
+      <ol>
+        <li>このページを別のデバイス（PCまたは別のiPad/iPhone）に表示します</li>
+        <li>コナモンアプリを起動し、カメラ画面を開きます</li>
+        <li>下記のバーコードのいずれかにカメラを向けます</li>
+        <li>バーコードが認識されると、薬品名が自動表示されます</li>
+        <li>「撮影する」をタップして秤量写真を撮影します</li>
+        <li>印刷ボタンから記録を印刷できます（AirPrint対応プリンターが必要）</li>
+      </ol>
+    </div>
+
+    <div id="barcodes"></div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">コナモン</div>
+      <p>
+        <a href="index.html">ホーム</a> ・ <a href="privacy.html">プライバシーポリシー</a> ・ <a href="support.html">サポート</a>
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // EAN-13 barcode generator
+    const ENCODINGS = {
+      L: [
+        '0001101','0011001','0010011','0111101','0100011',
+        '0110001','0101111','0111011','0110111','0001011'
+      ],
+      G: [
+        '0100111','0110011','0011011','0100001','0011101',
+        '0111001','0000101','0010001','0001001','0010111'
+      ],
+      R: [
+        '1110010','1100110','1101100','1000010','1011100',
+        '1001110','1010000','1000100','1001000','1110100'
+      ]
+    };
+
+    const PARITY_PATTERNS = [
+      'LLLLLL','LLGLGG','LLGGLG','LLGGGL','LGLLGG',
+      'LGGLLG','LGGGLL','LGLGLG','LGLGGL','LGGLGL'
+    ];
+
+    function encodeEAN13(code) {
+      const digits = code.split('').map(Number);
+      const parity = PARITY_PATTERNS[digits[0]];
+      let bits = '101'; // start guard
+      for (let i = 0; i < 6; i++) {
+        const enc = parity[i] === 'L' ? ENCODINGS.L : ENCODINGS.G;
+        bits += enc[digits[i + 1]];
+      }
+      bits += '01010'; // center guard
+      for (let i = 0; i < 6; i++) {
+        bits += ENCODINGS.R[digits[i + 7]];
+      }
+      bits += '101'; // end guard
+      return bits;
+    }
+
+    function drawBarcode(canvas, code) {
+      const bits = encodeEAN13(code);
+      const ctx = canvas.getContext('2d');
+      const scale = 3;
+      const barHeight = 80;
+      const quietZone = 20;
+      canvas.width = bits.length * scale + quietZone * 2;
+      canvas.height = barHeight + 10;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#000';
+      for (let i = 0; i < bits.length; i++) {
+        if (bits[i] === '1') {
+          ctx.fillRect(quietZone + i * scale, 0, scale, barHeight);
+        }
+      }
+    }
+
+    const medicines = [
+      { code: '4987123456789', name: 'ロキソニンS 12錠' },
+      { code: '4987234567890', name: 'バファリンA 20錠' },
+      { code: '4987345678901', name: 'パブロンゴールドA 44包' },
+      { code: '4987067258017', name: 'アレグラFX 28錠' },
+      { code: '4987306048485', name: 'パブロンSゴールドW 60錠' },
+    ];
+
+    const container = document.getElementById('barcodes');
+    medicines.forEach(m => {
+      const card = document.createElement('div');
+      card.className = 'barcode-card';
+      const h3 = document.createElement('h3');
+      h3.textContent = m.name;
+      const canvas = document.createElement('canvas');
+      const jan = document.createElement('div');
+      jan.className = 'jan-code';
+      jan.textContent = m.code;
+      card.appendChild(h3);
+      card.appendChild(canvas);
+      card.appendChild(jan);
+      container.appendChild(card);
+      drawBarcode(canvas, m.code);
+    });
+  </script>
+
+</body>
+</html>
