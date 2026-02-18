@@ -8,12 +8,12 @@ struct HistoryView: View {
 
     @State private var isPrinting = false
     @State private var printError: String?
+    @State private var lastFailedRecord: HistoryRecord?
 
-    // Search by scanID
+    // Search
     @State private var searchText = ""
     @State private var foundRecord: HistoryRecord?
     @State private var showPhotoDetail = false
-    @State private var searchNotFound = false
     @AppStorage("journalLayout") private var journalLayout: String = "a4"
 
     @Environment(\.dismiss) private var dismiss
@@ -24,19 +24,21 @@ struct HistoryView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // ScanID search bar
+            // Real-time search bar
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
-                TextField("撮影IDで検索", text: $searchText)
-                    .keyboardType(.numberPad)
+                TextField("ID・薬品名で検索", text: $searchText)
                     .textFieldStyle(.roundedBorder)
-                Button("検索") {
-                    performSearch()
+                    .autocorrectionDisabled()
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                .buttonStyle(.borderedProminent)
-                .buttonBorderShape(.capsule)
-                .disabled(searchText.isEmpty)
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
@@ -50,6 +52,18 @@ struct HistoryView: View {
                     Text("履歴はありません")
                         .font(.headline)
                         .foregroundStyle(.secondary)
+                }
+                Spacer()
+            } else if filteredRecords.isEmpty {
+                Spacer()
+                VStack(spacing: 12) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.secondary)
+                    Text("「\(searchText)」に一致する記録はありません")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
                 }
                 Spacer()
             } else {
@@ -137,14 +151,14 @@ struct HistoryView: View {
             get: { printError != nil },
             set: { if !$0 { printError = nil } }
         )) {
+            if let record = lastFailedRecord {
+                Button("再印刷") {
+                    reprintRecord(record)
+                }
+            }
             Button("OK", role: .cancel) {}
         } message: {
             Text(printError ?? "")
-        }
-        .alert("見つかりません", isPresented: $searchNotFound) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("撮影ID「\(searchText)」に一致する記録はありません。")
         }
         .sheet(isPresented: $showPhotoDetail) {
             if let record = foundRecord {
@@ -154,18 +168,15 @@ struct HistoryView: View {
         .onAppear { reload() }
     }
 
-    // MARK: - Search
+    // MARK: - Filtering
 
-    private func performSearch() {
-        guard let scanID = Int(searchText) else {
-            searchNotFound = true
-            return
-        }
-        if let record = HistoryStore.find(byScanID: scanID) {
-            foundRecord = record
-            showPhotoDetail = true
-        } else {
-            searchNotFound = true
+    private var filteredRecords: [HistoryRecord] {
+        let query = searchText.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty else { return records }
+        return records.filter { record in
+            record.medicineName.localizedCaseInsensitiveContains(query)
+            || record.scanIDString.contains(query)
+            || record.barcode.contains(query)
         }
     }
 
@@ -181,7 +192,7 @@ struct HistoryView: View {
         formatter.locale = Locale(identifier: "ja_JP")
         formatter.dateFormat = "M月d日（E）"
 
-        let grouped = Dictionary(grouping: records) { record in
+        let grouped = Dictionary(grouping: filteredRecords) { record in
             formatter.string(from: record.date)
         }
 
@@ -199,17 +210,25 @@ struct HistoryView: View {
 
     private func reprintRecord(_ record: HistoryRecord) {
         guard let photo = record.photo else {
+            lastFailedRecord = record
             printError = "写真の読み込みに失敗しました。"
             return
         }
 
         isPrinting = true
+        lastFailedRecord = record
 
-        guard let printableImage = PrintHelper.compositeImage(
+        var item = ScannedItem(
+            barcode: record.barcode,
             medicineName: record.medicineName,
             weight: record.weight,
             photo: photo,
-            layout: .a4,
+            barcodePhoto: record.barcodePhoto
+        )
+        item.scanID = record.scanID
+
+        guard let printableImage = PrintHelper.compositeBatchImage(
+            items: [item],
             monochrome: isMonochrome
         ) else {
             printError = "印刷用レイアウトの生成に失敗しました。"
@@ -307,6 +326,9 @@ private struct HistoryRow: View {
                             .foregroundStyle(.orange)
                     }
                 }
+                Text(record.barcode)
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(.secondary)
                 Text(Self.timeFormatter.string(from: record.date))
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -352,9 +374,29 @@ struct PhotoDetailSheet: View {
                         }
                     }
 
+                    Label(record.barcode, systemImage: "barcode")
+                        .font(.body.monospacedDigit())
+                        .foregroundStyle(.secondary)
+
                     Text(Self.dateFormatter.string(from: record.date))
                         .font(.caption)
                         .foregroundStyle(.secondary)
+
+                    // Barcode photo
+                    if let barcodePhoto = record.barcodePhoto {
+                        VStack(spacing: 6) {
+                            Text("バーコード写真")
+                                .font(.caption.bold())
+                                .foregroundStyle(.secondary)
+                            Image(uiImage: barcodePhoto)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(maxHeight: 200)
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                                .shadow(radius: 2)
+                        }
+                        .padding(.horizontal)
+                    }
 
                     if let photo = record.photo {
                         Image(uiImage: photo)

@@ -7,6 +7,8 @@ struct HistoryRecord: Codable, Identifiable {
     let medicineName: String
     let weight: String
     let photoFileName: String
+    /// File name for the cropped barcode area photo (nil for older records).
+    let barcodePhotoFileName: String?
     let date: Date
     /// Short numeric ID for receipt/journal printing and search.
     let scanID: Int
@@ -16,9 +18,21 @@ struct HistoryRecord: Codable, Identifiable {
         HistoryStore.photosDirectory.appendingPathComponent(photoFileName)
     }
 
+    /// Returns the full file URL for the barcode photo.
+    var barcodePhotoURL: URL? {
+        guard let name = barcodePhotoFileName else { return nil }
+        return HistoryStore.photosDirectory.appendingPathComponent(name)
+    }
+
     /// Loads the photo from disk (may return nil if file was deleted).
     var photo: UIImage? {
         UIImage(contentsOfFile: photoURL.path)
+    }
+
+    /// Loads the barcode photo from disk (may return nil).
+    var barcodePhoto: UIImage? {
+        guard let url = barcodePhotoURL else { return nil }
+        return UIImage(contentsOfFile: url.path)
     }
 
     /// Formatted scanID for display (zero-padded 6 digits).
@@ -61,6 +75,9 @@ enum HistoryStore {
         if !expired.isEmpty {
             for record in expired {
                 try? FileManager.default.removeItem(at: record.photoURL)
+                if let bcURL = record.barcodePhotoURL {
+                    try? FileManager.default.removeItem(at: bcURL)
+                }
             }
             records.removeAll { $0.date < cutoff }
             writeJSON(records)
@@ -70,7 +87,7 @@ enum HistoryStore {
 
     /// Saves a single scanned item to history and returns the assigned scanID.
     @discardableResult
-    static func save(barcode: String, medicineName: String, weight: String, photo: UIImage) -> Int {
+    static func save(barcode: String, medicineName: String, weight: String, photo: UIImage, barcodePhoto: UIImage? = nil) -> Int {
         ensureDirectories()
         let id = UUID().uuidString
         let fileName = "\(id).jpg"
@@ -81,6 +98,17 @@ enum HistoryStore {
             try? data.write(to: fileURL)
         }
 
+        // Save barcode photo if available
+        var barcodeFileName: String?
+        if let barcodeImg = barcodePhoto {
+            let bcFileName = "\(id)_barcode.jpg"
+            let bcFileURL = photosDirectory.appendingPathComponent(bcFileName)
+            if let data = barcodeImg.jpegData(compressionQuality: 0.8) {
+                try? data.write(to: bcFileURL)
+                barcodeFileName = bcFileName
+            }
+        }
+
         let nextID = nextScanID()
 
         let record = HistoryRecord(
@@ -89,6 +117,7 @@ enum HistoryStore {
             medicineName: medicineName,
             weight: weight,
             photoFileName: fileName,
+            barcodePhotoFileName: barcodeFileName,
             date: Date(),
             scanID: nextID
         )
@@ -100,10 +129,11 @@ enum HistoryStore {
     }
 
     /// Saves multiple items at once and returns assigned scanIDs in order.
+    @discardableResult
     static func saveBatch(_ items: [ScannedItem]) -> [Int] {
         var ids: [Int] = []
         for item in items {
-            let scanID = save(barcode: item.barcode, medicineName: item.medicineName, weight: item.weight, photo: item.photo)
+            let scanID = save(barcode: item.barcode, medicineName: item.medicineName, weight: item.weight, photo: item.photo, barcodePhoto: item.barcodePhoto)
             ids.append(scanID)
         }
         return ids
@@ -118,6 +148,9 @@ enum HistoryStore {
     /// Deletes a single history record.
     static func delete(_ record: HistoryRecord) {
         try? FileManager.default.removeItem(at: record.photoURL)
+        if let bcURL = record.barcodePhotoURL {
+            try? FileManager.default.removeItem(at: bcURL)
+        }
         var records = readJSON()
         records.removeAll { $0.id == record.id }
         writeJSON(records)

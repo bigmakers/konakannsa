@@ -6,6 +6,10 @@ import SwiftUI
 struct ConfirmationView: View {
     let photo: UIImage
     let medicineName: String
+    /// Cropped barcode area photo (may be nil for older flows).
+    var barcodePhoto: UIImage?
+    /// Barcode string for saving.
+    var barcode: String = ""
 
     /// Binding to the weight value (manual input).
     @Binding var weight: String
@@ -28,6 +32,8 @@ struct ConfirmationView: View {
 
     @State private var isPrinting = false
     @State private var printError: String?
+    @State private var showPrintChoice = false
+    @AppStorage("journalLayout") private var journalLayout: String = "a4"
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -40,32 +46,15 @@ struct ConfirmationView: View {
 
                 // Photo (left) + Numpad (right) side by side
                 HStack(alignment: .top, spacing: 12) {
-                    // Photo + retake button
-                    ZStack(alignment: .bottomTrailing) {
-                        Image(uiImage: photo)
-                            .resizable()
-                            .scaledToFit()
-                            .saturation(isMonochrome ? 0 : 1)
-                            .contrast(isMonochrome ? 1.3 : 1)
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                            .shadow(radius: 4)
-
-                        Button {
-                            if let onRetake {
-                                dismiss()
-                                onRetake()
-                            }
-                        } label: {
-                            Label("再撮影", systemImage: "camera.fill")
-                                .font(.caption.bold())
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 5)
-                                .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 4))
-                                .foregroundStyle(.white)
-                        }
-                        .padding(6)
-                    }
-                    .frame(maxWidth: .infinity)
+                    // Photo
+                    Image(uiImage: photo)
+                        .resizable()
+                        .scaledToFit()
+                        .saturation(isMonochrome ? 0 : 1)
+                        .contrast(isMonochrome ? 1.3 : 1)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .shadow(radius: 4)
+                        .frame(maxWidth: .infinity)
 
                     // Weight display + numpad
                     VStack(spacing: 8) {
@@ -132,7 +121,22 @@ struct ConfirmationView: View {
                 }
                 .padding(.horizontal)
 
-                Spacer().frame(height: 8)
+                // Retake button
+                Button {
+                    if let onRetake {
+                        dismiss()
+                        onRetake()
+                    }
+                } label: {
+                    Label("再撮影", systemImage: "camera.fill")
+                        .font(.subheadline.bold())
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color(.systemGray5))
+                        .foregroundStyle(.primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
+                .padding(.horizontal, 24)
 
                 // Add to batch list button
                 if let onAddToList {
@@ -158,7 +162,7 @@ struct ConfirmationView: View {
 
                 // Single-item print button
                 Button {
-                    printCombinedLayout()
+                    showPrintChoice = true
                 } label: {
                     Label("この1件を印刷", systemImage: "printer.fill")
                         .font(.subheadline.bold())
@@ -199,6 +203,21 @@ struct ConfirmationView: View {
         } message: {
             Text(printError ?? "")
         }
+        .confirmationDialog(
+            "印刷形式を選択",
+            isPresented: $showPrintChoice,
+            titleVisibility: .visible
+        ) {
+            Button("写真付き印刷") {
+                printCombinedLayout()
+            }
+            Button("ジャーナル印刷") {
+                printJournalLayout()
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("写真付き: 日付・ID・医薬品・秤量数・写真を一覧印刷\nジャーナル: 日付・ID・医薬品・バーコード・秤量数のリスト")
+        }
     }
 
     // MARK: - Number Input
@@ -211,6 +230,12 @@ struct ConfirmationView: View {
         weight.append(key)
     }
 
+    // MARK: - Journal Layout Helper
+
+    private var selectedJournalLayout: PrintHelper.PageLayout {
+        journalLayout == "receipt" ? .receipt58mm : .a4
+    }
+
     // MARK: - Printing
 
     private func printCombinedLayout() {
@@ -218,17 +243,19 @@ struct ConfirmationView: View {
 
         // Save first to get scanID
         let scanID = HistoryStore.save(
-            barcode: "",
+            barcode: barcode,
             medicineName: medicineName,
             weight: weight,
-            photo: photo
+            photo: photo,
+            barcodePhoto: barcodePhoto
         )
 
-        let item = ScannedItem(
-            barcode: "",
+        var item = ScannedItem(
+            barcode: barcode,
             medicineName: medicineName,
             weight: weight,
-            photo: photo
+            photo: photo,
+            barcodePhoto: barcodePhoto
         )
         item.scanID = scanID
 
@@ -259,6 +286,58 @@ struct ConfirmationView: View {
             }
         }
     }
+
+    private func printJournalLayout() {
+        isPrinting = true
+
+        // Save first to get scanID
+        let scanID = HistoryStore.save(
+            barcode: barcode,
+            medicineName: medicineName,
+            weight: weight,
+            photo: photo,
+            barcodePhoto: barcodePhoto
+        )
+
+        // Build a HistoryRecord to pass to journal renderer
+        let record = HistoryRecord(
+            id: UUID().uuidString,
+            barcode: barcode,
+            medicineName: medicineName,
+            weight: weight,
+            photoFileName: "",
+            barcodePhotoFileName: nil,
+            date: Date(),
+            scanID: scanID
+        )
+
+        guard let journalImage = PrintHelper.journalImage(
+            records: [record],
+            layout: selectedJournalLayout
+        ) else {
+            printError = "ジャーナル印刷用レイアウトの生成に失敗しました。"
+            isPrinting = false
+            return
+        }
+
+        let printController = UIPrintInteractionController.shared
+        let printInfo = UIPrintInfo.printInfo()
+        printInfo.outputType = .general
+        printInfo.jobName = "秤量ジャーナル – \(medicineName)"
+
+        printController.printInfo = printInfo
+        printController.printingItem = journalImage
+
+        printController.present(animated: true) { _, completed, error in
+            isPrinting = false
+            if let error {
+                printError = error.localizedDescription
+            } else if completed {
+                dismiss()
+                onDone()
+            }
+        }
+    }
 }
 
 // MARK: - Preview
@@ -267,8 +346,10 @@ struct ConfirmationView: View {
     NavigationStack {
         ConfirmationView(
             photo: UIImage(systemName: "pill.fill")!,
-            medicineName: "アレグラFX 28錠",
-            weight: .constant("6.8"),
+            medicineName: "ロキソニンS 12錠",
+            barcodePhoto: UIImage(systemName: "barcode")!,
+            barcode: "4987123456789",
+            weight: .constant("12.5"),
             batchCount: 2,
             onAddToList: {},
             onRetake: {}

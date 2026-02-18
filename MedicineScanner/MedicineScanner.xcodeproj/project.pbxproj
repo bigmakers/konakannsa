@@ -21,9 +21,13 @@
 		A1000013 /* ReceiptPrinterService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000015 /* ReceiptPrinterService.swift */; };
 		A1000014 /* StoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000016 /* StoreManager.swift */; };
 		A1000015 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000017 /* PaywallView.swift */; };
+		A1000016 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A2000018 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		3E2A56652F40A0210045DD65 /* CSJPOSLibSwift.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CSJPOSLibSwift.framework; path = "../../Downloads/CSJiOSSwiftSDK_V212J/Library/Swift5.9 or later (XCFramework with Privacy Manifest)/CSJPOSLibSwift.xcframework/ios-arm64/CSJPOSLibSwift.framework"; sourceTree = "<group>"; };
+		3E2A56692F40A0920045DD65 /* CSJPOSLibSwift.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = CSJPOSLibSwift.xcframework; path = "../../Downloads/CSJiOSSwiftSDK_V212J/Library/Swift5.3 or later (XCFramework)/CSJPOSLibSwift.xcframework"; sourceTree = "<group>"; };
+		3E2A566C2F40A0B60045DD65 /* CSJPOSLibSwift.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = CSJPOSLibSwift.xcframework; path = "../../Downloads/CSJiOSSwiftSDK_V212J/Library/Swift5.1 or later (XCFramework)/CSJPOSLibSwift.xcframework"; sourceTree = "<group>"; };
 		A2000001 /* MedicineScannerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicineScannerApp.swift; sourceTree = "<group>"; };
 		A2000002 /* ScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerView.swift; sourceTree = "<group>"; };
 		A2000003 /* ConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmationView.swift; sourceTree = "<group>"; };
@@ -40,6 +44,7 @@
 		A2000015 /* ReceiptPrinterService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptPrinterService.swift; sourceTree = "<group>"; };
 		A2000016 /* StoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreManager.swift; sourceTree = "<group>"; };
 		A2000017 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		A2000018 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,10 +58,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3E2A56642F40A0210045DD65 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				3E2A56692F40A0920045DD65 /* CSJPOSLibSwift.xcframework */,
+				3E2A566C2F40A0B60045DD65 /* CSJPOSLibSwift.xcframework */,
+				3E2A56652F40A0210045DD65 /* CSJPOSLibSwift.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		A4000001 = {
 			isa = PBXGroup;
 			children = (
 				A4000002 /* MedicineScanner */,
+				3E2A56642F40A0210045DD65 /* Frameworks */,
 				A4000006 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -66,6 +82,7 @@
 			children = (
 				A2000001 /* MedicineScannerApp.swift */,
 				A2000007 /* Info.plist */,
+				A2000018 /* PrivacyInfo.xcprivacy */,
 				A2000009 /* Assets.xcassets */,
 				A4000003 /* Views */,
 				A4000004 /* ViewModels */,
@@ -150,11 +167,11 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1500;
-				LastUpgradeCheck = 1500;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					A5000001 = {
-						CreatedOnToolsVersion = 15.0;
+						CreatedOnToolsVersion = 26.2;
 					};
 				};
 			};
@@ -183,6 +200,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1000008 /* Assets.xcassets in Resources */,
+				A1000016 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -335,7 +353,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 4;
+				DEVELOPMENT_TEAM = 4666YH8WY2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MedicineScanner/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "医薬品のバーコードスキャンと写真撮影のためにカメラを使用します。";
@@ -348,12 +367,15 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.konamon.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -363,7 +385,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 4;
+				DEVELOPMENT_TEAM = 4666YH8WY2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MedicineScanner/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "医薬品のバーコードスキャンと写真撮影のためにカメラを使用します。";
@@ -376,12 +399,15 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.konamon.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -407,7 +433,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
 	};
 	rootObject = A8000001 /* Project object */;
 }

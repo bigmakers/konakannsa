@@ -7,8 +7,8 @@ final class StoreManager: ObservableObject {
 
     // Product identifiers
     static let premiumID = "com.konamon.app.premium"
-    static let donation20000ID = "com.konamon.app.donation.20000"
-    static let donation50000ID = "com.konamon.app.donation.50000"
+    static let donation200ID = "com.konamon.app.donation.200"
+    static let donation500ID = "com.konamon.app.donation.500"
 
     /// Free tier medicine registration limit.
     static let freeLimit = 5
@@ -16,6 +16,8 @@ final class StoreManager: ObservableObject {
     @Published var isPremium = false
     @Published var products: [Product] = []
     @Published var purchaseError: String?
+    /// Shared flag to present PaywallView from anywhere in the app.
+    @Published var showPaywall = false
 
     private var updateListener: Task<Void, Error>?
 
@@ -34,8 +36,8 @@ final class StoreManager: ObservableObject {
         do {
             let ids: Set<String> = [
                 Self.premiumID,
-                Self.donation20000ID,
-                Self.donation50000ID,
+                Self.donation200ID,
+                Self.donation500ID,
             ]
             products = try await Product.products(for: ids)
                 .sorted { $0.price < $1.price }

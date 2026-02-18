@@ -8,7 +8,6 @@ struct MedicineListView: View {
     @State private var editingEntry: MedicineService.MedicineEntry?
     @State private var editedName = ""
     @State private var showEditAlert = false
-    @State private var showPaywall = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -43,7 +42,7 @@ struct MedicineListView: View {
                             }
                             if entries.count >= StoreManager.freeLimit {
                                 Button("プレミアムにアップグレード（無制限）") {
-                                    showPaywall = true
+                                    store.showPaywall = true
                                 }
                                 .font(.subheadline)
                             }
@@ -110,9 +109,8 @@ struct MedicineListView: View {
         } message: {
             Text("バーコード: \(editingEntry?.barcode ?? "")")
         }
-        .sheet(isPresented: $showPaywall) {
-            PaywallView(store: store)
-        }
+
+
     }
 
     private func reload() {
@@ -130,12 +128,18 @@ private struct MedicineRow: View {
         Button {
             onTap?()
         } label: {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(entry.name)
-                    .font(.body.bold())
-                    .foregroundStyle(.primary)
-                Text(entry.barcode)
-                    .font(.caption.monospacedDigit())
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(entry.name)
+                        .font(.body.bold())
+                        .foregroundStyle(.primary)
+                    Text(entry.barcode)
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "pencil.circle")
+                    .font(.title3)
                     .foregroundStyle(.secondary)
             }
             .padding(.vertical, 2)

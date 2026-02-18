@@ -22,6 +22,62 @@ extension UIImage {
 /// and the captured photo into a single page layout suitable for AirPrint.
 enum PrintHelper {
 
+    // MARK: - Barcode Image Generation
+
+    /// Generates a barcode UIImage from a string.
+    /// - EAN-13 (13 digits) → uses `CIEAN13BarcodeGenerator` so scanners read it as a standard JAN/EAN barcode.
+    /// - GS1 / other → uses `CICode128BarcodeGenerator` (GS1-128 compatible).
+    /// Returns nil if the string cannot be encoded.
+    static func generateBarcodeImage(from string: String, size: CGSize) -> UIImage? {
+        guard !string.isEmpty else { return nil }
+
+        let ciImage: CIImage?
+
+        if string.count == 13, string.allSatisfy(\.isASCII), string.allSatisfy(\.isNumber) {
+            // EAN-13 (JAN code) — generate as native EAN-13 barcode
+            guard let data = string.data(using: .ascii),
+                  let filter = CIFilter(name: "CIEAN13BarcodeGenerator") else { return nil }
+            filter.setValue(data, forKey: "inputMessage")
+            filter.setValue(0.0, forKey: "inputQuietSpace")
+            ciImage = filter.outputImage
+        } else {
+            // GS1-128 / other — Code128 (universally readable, GS1-128 compatible)
+            guard let data = string.data(using: .ascii),
+                  let filter = CIFilter(name: "CICode128BarcodeGenerator") else { return nil }
+            filter.setValue(data, forKey: "inputMessage")
+            filter.setValue(0.0, forKey: "inputQuietSpace")
+            ciImage = filter.outputImage
+        }
+
+        guard let output = ciImage else { return nil }
+
+        // Scale up to desired size (CIFilter output is tiny)
+        let scaleX = size.width / output.extent.width
+        let scaleY = size.height / output.extent.height
+        let scaled = output.transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
+
+        let context = CIContext()
+        guard let cgImage = context.createCGImage(scaled, from: scaled.extent) else { return nil }
+        return UIImage(cgImage: cgImage)
+    }
+
+    // MARK: - GS1 AI Formatting
+
+    /// Formats a GS1 barcode string by wrapping the first 2 digits (Application
+    /// Identifier) in parentheses for human-readable display.
+    /// Example: "0104987107610362" → "(01)04987107610362"
+    /// Non-GS1 barcodes (e.g. plain EAN-13) are returned unchanged.
+    static func formatGS1Display(_ barcode: String) -> String {
+        // GS1 DataBar strings are typically longer than 13 digits and start
+        // with a 2-digit AI.  Plain EAN-13/EAN-8 are 13 or 8 digits.
+        guard barcode.count > 13, barcode.allSatisfy(\.isNumber) else {
+            return barcode
+        }
+        let ai = barcode.prefix(2)
+        let rest = barcode.dropFirst(2)
+        return "(\(ai))\(rest)"
+    }
+
     // MARK: - Layout
 
     /// Predefined page sizes.
@@ -58,7 +114,8 @@ enum PrintHelper {
             barcode: "",
             medicineName: medicineName,
             weight: weight,
-            photo: photo
+            photo: photo,
+            barcodePhoto: nil
         )
         return compositeBatchImage(items: [item], monochrome: monochrome)
     }
@@ -66,7 +123,7 @@ enum PrintHelper {
     // MARK: - Batch Composite Rendering (4 columns × 5 rows, column-major)
 
     /// Renders multiple scanned items into a single A4 `UIImage` in a 4-column,
-    /// 5-row grid. Each cell: medicine name → ID → weight → photo (top-to-bottom).
+    /// 5-row grid. Each cell: 日付 → ID → 医薬品 → 秤量数 → 写真1(バーコード) → 写真2(秤量).
     /// Items fill vertically first (column by column).
     static func compositeBatchImage(items: [ScannedItem], monochrome: Bool = false) -> UIImage? {
         guard !items.isEmpty else { return nil }
@@ -118,14 +175,20 @@ enum PrintHelper {
             let availableHeight = pageSize.height - gridTop - margin
             let cellHeight = (availableHeight - totalGapY) / CGFloat(maxRows)
 
-            // Font sizes: name is small, ID and weight are compact
+            // Font sizes
+            let dateFontSize: CGFloat = min(6, cellHeight * 0.04)
             let nameFontSize: CGFloat = min(8, cellHeight * 0.06)
             let idFontSize: CGFloat = min(7, cellHeight * 0.05)
             let weightFontSize: CGFloat = min(8, cellHeight * 0.06)
+            let dateFont = UIFont.monospacedDigitSystemFont(ofSize: dateFontSize, weight: .regular)
             let nameFont = UIFont.boldSystemFont(ofSize: nameFontSize)
             let idFont = UIFont.monospacedDigitSystemFont(ofSize: idFontSize, weight: .medium)
             let weightFont = UIFont.monospacedDigitSystemFont(ofSize: weightFontSize, weight: .bold)
 
+            let dateAttributes: [NSAttributedString.Key: Any] = [
+                .font: dateFont,
+                .foregroundColor: UIColor.darkGray,
+            ]
             let nameAttributes: [NSAttributedString.Key: Any] = [
                 .font: nameFont,
                 .foregroundColor: UIColor.black,
@@ -138,6 +201,10 @@ enum PrintHelper {
                 .font: weightFont,
                 .foregroundColor: UIColor.darkGray,
             ]
+
+            let rowDateFormatter = DateFormatter()
+            rowDateFormatter.locale = Locale(identifier: "ja_JP")
+            rowDateFormatter.dateFormat = "M/d HH:mm"
 
             for (index, item) in items.enumerated() {
                 // Column-major order: fill vertically first
@@ -158,7 +225,25 @@ enum PrintHelper {
                 let textPadding: CGFloat = 4
                 var cursorY = cellY + textPadding
 
-                // 1. Medicine name (top)
+                // 1. Date (top)
+                let nowStr = rowDateFormatter.string(from: Date()) as NSString
+                nowStr.draw(
+                    at: CGPoint(x: cellX + textPadding, y: cursorY),
+                    withAttributes: dateAttributes
+                )
+                cursorY += dateFont.lineHeight + 1
+
+                // 2. ScanID
+                if let scanID = item.scanID {
+                    let idStr = String(format: "#%06d", scanID) as NSString
+                    idStr.draw(
+                        at: CGPoint(x: cellX + textPadding, y: cursorY),
+                        withAttributes: idAttributes
+                    )
+                    cursorY += idFont.lineHeight + 1
+                }
+
+                // 3. Medicine name
                 let nameRect = CGRect(
                     x: cellX + textPadding,
                     y: cursorY,
@@ -169,19 +254,9 @@ enum PrintHelper {
                     in: nameRect,
                     withAttributes: nameAttributes
                 )
-                cursorY += nameFont.lineHeight + 2
+                cursorY += nameFont.lineHeight + 1
 
-                // 2. ScanID (below name)
-                if let scanID = item.scanID {
-                    let idStr = String(format: "#%06d", scanID) as NSString
-                    idStr.draw(
-                        at: CGPoint(x: cellX + textPadding, y: cursorY),
-                        withAttributes: idAttributes
-                    )
-                    cursorY += idFont.lineHeight + 1
-                }
-
-                // 3. Weight (below ID)
+                // 4. Weight
                 if !item.weight.isEmpty {
                     let weightText = "\(item.weight)g" as NSString
                     weightText.draw(
@@ -191,31 +266,51 @@ enum PrintHelper {
                 }
                 cursorY += weightFont.lineHeight + 2
 
-                // 4. Photo (fill remaining space)
+                // 5 & 6. Photos side by side: 写真1(barcode) | 写真2(scale)
                 let photoAvailableWidth = cellWidth - textPadding * 2
                 let photoAvailableHeight = cellHeight - (cursorY - cellY) - textPadding
 
                 guard photoAvailableHeight > 0 else { continue }
 
-                let cellPhoto = monochrome ? item.photo.monochromed() : item.photo
-                let photoAspect = cellPhoto.size.width / cellPhoto.size.height
-                var photoWidth = photoAvailableWidth
-                var photoHeight = photoWidth / photoAspect
+                let hasBarcodePhoto = item.barcodePhoto != nil
+                let photoSlotWidth = hasBarcodePhoto ? (photoAvailableWidth - 2) / 2 : photoAvailableWidth
 
-                if photoHeight > photoAvailableHeight {
-                    photoHeight = photoAvailableHeight
-                    photoWidth = photoHeight * photoAspect
+                // Helper to draw a photo in a given rect
+                func drawPhoto(_ image: UIImage, in rect: CGRect) {
+                    let img = monochrome ? image.monochromed() : image
+                    let aspect = img.size.width / img.size.height
+                    var w = rect.width
+                    var h = w / aspect
+                    if h > rect.height {
+                        h = rect.height
+                        w = h * aspect
+                    }
+                    let x = rect.origin.x + (rect.width - w) / 2
+                    let y = rect.origin.y + (rect.height - h) / 2
+                    let drawRect = CGRect(x: x, y: y, width: w, height: h)
+                    let clip = UIBezierPath(roundedRect: drawRect, cornerRadius: 3)
+                    context.cgContext.saveGState()
+                    clip.addClip()
+                    img.draw(in: drawRect)
+                    context.cgContext.restoreGState()
                 }
 
-                let photoX = cellX + textPadding + (photoAvailableWidth - photoWidth) / 2
-                let photoRect = CGRect(x: photoX, y: cursorY,
-                                       width: photoWidth, height: photoHeight)
+                if let bcPhoto = item.barcodePhoto {
+                    // Photo 1: barcode (left)
+                    let photo1Rect = CGRect(x: cellX + textPadding, y: cursorY,
+                                            width: photoSlotWidth, height: photoAvailableHeight)
+                    drawPhoto(bcPhoto, in: photo1Rect)
 
-                let photoClipPath = UIBezierPath(roundedRect: photoRect, cornerRadius: 3)
-                context.cgContext.saveGState()
-                photoClipPath.addClip()
-                cellPhoto.draw(in: photoRect)
-                context.cgContext.restoreGState()
+                    // Photo 2: scale photo (right)
+                    let photo2Rect = CGRect(x: cellX + textPadding + photoSlotWidth + 2, y: cursorY,
+                                            width: photoSlotWidth, height: photoAvailableHeight)
+                    drawPhoto(item.photo, in: photo2Rect)
+                } else {
+                    // Only scale photo (full width)
+                    let photoRect = CGRect(x: cellX + textPadding, y: cursorY,
+                                           width: photoAvailableWidth, height: photoAvailableHeight)
+                    drawPhoto(item.photo, in: photoRect)
+                }
             }
         }
     }
@@ -263,18 +358,26 @@ enum PrintHelper {
 
             let titleBottom = margin + titleFont.lineHeight + 8
 
-            let headerFont = UIFont.boldSystemFont(ofSize: 11)
+            let headerFont = UIFont.boldSystemFont(ofSize: 10)
             let headerAttrs: [NSAttributedString.Key: Any] = [
                 .font: headerFont,
                 .foregroundColor: UIColor.darkGray,
             ]
 
+            // 5 columns: 日付 | ID | 医薬品名 | バーコード | 秤量(g)
             let colDate: CGFloat = margin
-            let colID: CGFloat = margin + 120
-            let colName: CGFloat = margin + 190
-            let colWeight: CGFloat = pageSize.width - margin - 60
+            let colID: CGFloat = margin + 80
+            let colName: CGFloat = margin + 140
+            let colBarcode: CGFloat = margin + 290
+            let colWeight: CGFloat = pageSize.width - margin - 50
 
-            for (x, text) in [(colDate, "日付"), (colID, "撮影ID"), (colName, "医薬品名"), (colWeight, "秤量(g)")] {
+            for (x, text) in [
+                (colDate, "日付"),
+                (colID, "ID"),
+                (colName, "医薬品名"),
+                (colBarcode, "バーコード"),
+                (colWeight, "秤量(g)")
+            ] {
                 (text as NSString).draw(at: CGPoint(x: x, y: titleBottom), withAttributes: headerAttrs)
             }
 
@@ -286,8 +389,8 @@ enum PrintHelper {
             sepPath.lineWidth = 1.0
             sepPath.stroke()
 
-            let rowFont = UIFont.monospacedDigitSystemFont(ofSize: 10, weight: .regular)
-            let nameFont = UIFont.systemFont(ofSize: 10)
+            let rowFont = UIFont.monospacedDigitSystemFont(ofSize: 9, weight: .regular)
+            let nameFont = UIFont.systemFont(ofSize: 9)
             let rowAttrs: [NSAttributedString.Key: Any] = [.font: rowFont, .foregroundColor: UIColor.black]
             let nameAttrs: [NSAttributedString.Key: Any] = [.font: nameFont, .foregroundColor: UIColor.black]
 
@@ -295,22 +398,50 @@ enum PrintHelper {
             rowDateFormatter.locale = Locale(identifier: "ja_JP")
             rowDateFormatter.dateFormat = "M/d HH:mm"
 
-            let rowHeight: CGFloat = rowFont.lineHeight + 6
+            // Row height: barcode image height + number text + padding
+            let barcodeImgHeight: CGFloat = 22
+            let barcodeNumFontSize: CGFloat = 6
+            let barcodeNumFont = UIFont.monospacedDigitSystemFont(ofSize: barcodeNumFontSize, weight: .regular)
+            let barcodeNumAttrs: [NSAttributedString.Key: Any] = [.font: barcodeNumFont, .foregroundColor: UIColor.black]
+            let rowHeight: CGFloat = barcodeImgHeight + barcodeNumFont.lineHeight + 6
             var y = sepY + 6
             let sorted = records.sorted { $0.date < $1.date }
+
+            // Barcode image column width
+            let barcodeColWidth = colWeight - colBarcode - 8
 
             for record in sorted {
                 if y + rowHeight > pageSize.height - margin { break }
 
+                // Vertically center text in row
+                let textY = y + (rowHeight - rowFont.lineHeight) / 2 - 2
+
                 (rowDateFormatter.string(from: record.date) as NSString)
-                    .draw(at: CGPoint(x: colDate, y: y), withAttributes: rowAttrs)
+                    .draw(at: CGPoint(x: colDate, y: textY), withAttributes: rowAttrs)
                 (record.scanIDString as NSString)
-                    .draw(at: CGPoint(x: colID, y: y), withAttributes: rowAttrs)
+                    .draw(at: CGPoint(x: colID, y: textY), withAttributes: rowAttrs)
                 (record.medicineName as NSString).draw(
-                    in: CGRect(x: colName, y: y, width: colWeight - colName - 8, height: rowHeight),
+                    in: CGRect(x: colName, y: textY, width: colBarcode - colName - 4, height: rowFont.lineHeight + 2),
                     withAttributes: nameAttrs)
+
+                // Draw barcode image instead of text
+                if !record.barcode.isEmpty {
+                    let barcodeSize = CGSize(width: barcodeColWidth, height: barcodeImgHeight)
+                    // Barcode image uses raw data (no parentheses) for scanner compatibility
+                    if let barcodeImg = generateBarcodeImage(from: record.barcode, size: barcodeSize) {
+                        barcodeImg.draw(in: CGRect(x: colBarcode, y: y + 1,
+                                                    width: barcodeColWidth, height: barcodeImgHeight))
+                    }
+                    // Display text below uses formatted GS1 with parentheses
+                    let displayStr = formatGS1Display(record.barcode) as NSString
+                    let numSize = displayStr.size(withAttributes: barcodeNumAttrs)
+                    let numX = colBarcode + (barcodeColWidth - numSize.width) / 2
+                    displayStr.draw(at: CGPoint(x: numX, y: y + barcodeImgHeight + 1),
+                                withAttributes: barcodeNumAttrs)
+                }
+
                 ((record.weight.isEmpty ? "-" : record.weight) as NSString)
-                    .draw(at: CGPoint(x: colWeight, y: y), withAttributes: rowAttrs)
+                    .draw(at: CGPoint(x: colWeight, y: textY), withAttributes: rowAttrs)
 
                 let rowSepY = y + rowHeight - 1
                 UIColor(white: 0.85, alpha: 1).setStroke()
@@ -343,7 +474,10 @@ enum PrintHelper {
         let rowFontSize: CGFloat = 7
         let titleFont = UIFont.boldSystemFont(ofSize: titleFontSize)
         let rowFont = UIFont.systemFont(ofSize: rowFontSize)
-        let rowHeight: CGFloat = rowFont.lineHeight * 2 + 6   // 2 lines per item
+        let barcodeImgH: CGFloat = 18
+        let barcodeNumFontSize: CGFloat = 5
+        let barcodeNumFontR = UIFont.monospacedDigitSystemFont(ofSize: barcodeNumFontSize, weight: .regular)
+        let rowHeight: CGFloat = rowFont.lineHeight * 2 + barcodeImgH + barcodeNumFontR.lineHeight + 10
         let headerArea: CGFloat = titleFont.lineHeight + 20 + rowFont.lineHeight + 8
         let footerArea: CGFloat = 30
         let totalHeight = headerArea + rowHeight * CGFloat(records.count) + footerArea
@@ -418,7 +552,29 @@ enum PrintHelper {
                 (record.medicineName as NSString).draw(
                     in: CGRect(x: margin + 4, y: y, width: contentWidth - 4, height: nameFont.lineHeight + 2),
                     withAttributes: nameAttrs)
-                y += nameFont.lineHeight + 4
+                y += nameFont.lineHeight + 1
+
+                // Line 3: barcode image + number
+                if !record.barcode.isEmpty {
+                    let bcWidth = contentWidth - 8
+                    let bcSize = CGSize(width: bcWidth, height: barcodeImgH)
+                    // Barcode image uses raw data (no parentheses) for scanner compatibility
+                    if let bcImg = PrintHelper.generateBarcodeImage(from: record.barcode, size: bcSize) {
+                        bcImg.draw(in: CGRect(x: margin + 4, y: y, width: bcWidth, height: barcodeImgH))
+                    }
+                    y += barcodeImgH + 1
+                    // Formatted number below barcode
+                    let bcNumAttrs: [NSAttributedString.Key: Any] = [
+                        .font: barcodeNumFontR,
+                        .foregroundColor: UIColor.darkGray,
+                    ]
+                    let displayStr = PrintHelper.formatGS1Display(record.barcode) as NSString
+                    let numSize = displayStr.size(withAttributes: bcNumAttrs)
+                    let numX = margin + 4 + (bcWidth - numSize.width) / 2
+                    displayStr.draw(at: CGPoint(x: numX, y: y), withAttributes: bcNumAttrs)
+                    y += barcodeNumFontR.lineHeight + 1
+                }
+                y += 3
 
                 // Dotted separator
                 UIColor(white: 0.7, alpha: 1).setStroke()

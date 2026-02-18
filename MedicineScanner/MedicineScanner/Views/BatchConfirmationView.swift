@@ -10,6 +10,13 @@ struct BatchConfirmationView: View {
     @State private var isPrinting = false
     @State private var printError: String?
     @State private var showPrintChoice = false
+    @State private var showClearConfirm = false
+    /// Tracks which print method failed for retry.
+    @State private var lastPrintMethod: PrintMethod?
+
+    private enum PrintMethod {
+        case photos, journal
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -49,7 +56,9 @@ struct BatchConfirmationView: View {
                         .padding(.vertical, 4)
                     }
                     .onDelete { indexSet in
-                        viewModel.scannedItems.remove(atOffsets: indexSet)
+                        for index in indexSet {
+                            viewModel.removeItem(viewModel.scannedItems[index])
+                        }
                     }
                 }
                 .listStyle(.plain)
@@ -105,8 +114,7 @@ struct BatchConfirmationView: View {
 
                 if !viewModel.scannedItems.isEmpty {
                     Button("リストをクリア") {
-                        viewModel.resetAll()
-                        dismiss()
+                        showClearConfirm = true
                     }
                     .font(.caption.bold())
                     .foregroundStyle(.red)
@@ -122,9 +130,21 @@ struct BatchConfirmationView: View {
             get: { printError != nil },
             set: { if !$0 { printError = nil } }
         )) {
+            Button("再印刷") {
+                retryLastPrint()
+            }
             Button("OK", role: .cancel) {}
         } message: {
             Text(printError ?? "")
+        }
+        .alert("リストをクリアしますか？", isPresented: $showClearConfirm) {
+            Button("クリア（\(viewModel.scannedItems.count)件削除）", role: .destructive) {
+                viewModel.resetAll()
+                dismiss()
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("スキャン済みの\(viewModel.scannedItems.count)件が全て削除されます。この操作は元に戻せません。")
         }
         .confirmationDialog(
             "印刷形式を選択",
@@ -139,7 +159,17 @@ struct BatchConfirmationView: View {
             }
             Button("キャンセル", role: .cancel) {}
         } message: {
-            Text("写真付き: 写真・薬品名・秤量を一覧印刷\nジャーナル: 日付・撮影ID・薬品名・秤量のリスト")
+            Text("写真付き: 日付・ID・医薬品・秤量数・写真を一覧印刷\nジャーナル: 日付・ID・医薬品・バーコード番号・秤量数のリスト")
+        }
+    }
+
+    // MARK: - Retry
+
+    private func retryLastPrint() {
+        switch lastPrintMethod {
+        case .photos:  printBatchWithPhotos()
+        case .journal: printBatchJournal()
+        case nil:      break
         }
     }
 
@@ -147,6 +177,7 @@ struct BatchConfirmationView: View {
 
     private func printBatchWithPhotos() {
         isPrinting = true
+        lastPrintMethod = .photos
 
         // Save to history first to get scanIDs
         let scanIDs = HistoryStore.saveBatch(viewModel.scannedItems)
@@ -191,6 +222,7 @@ struct BatchConfirmationView: View {
 
     private func printBatchJournal() {
         isPrinting = true
+        lastPrintMethod = .journal
 
         // Save to history first so each item gets a scanID
         HistoryStore.saveBatch(viewModel.scannedItems)
@@ -240,8 +272,9 @@ struct BatchConfirmationView: View {
         BatchConfirmationView(viewModel: {
             let vm = ScannerViewModel()
             vm.scannedItems = [
-                ScannedItem(barcode: "4987067258017", medicineName: "アレグラFX 28錠", weight: "6.8", photo: UIImage(systemName: "pill.fill")!),
-                ScannedItem(barcode: "4987306048485", medicineName: "パブロンSゴールドW 60錠", weight: "15.0", photo: UIImage(systemName: "pill.fill")!),
+                ScannedItem(barcode: "4987123456789", medicineName: "ロキソニンS 12錠", weight: "12.5", photo: UIImage(systemName: "pill.fill")!, barcodePhoto: UIImage(systemName: "barcode")!),
+                ScannedItem(barcode: "4987234567890", medicineName: "バファリンA 20錠", weight: "8.3", photo: UIImage(systemName: "pill.fill")!, barcodePhoto: UIImage(systemName: "barcode")!),
+                ScannedItem(barcode: "4987345678901", medicineName: "パブロンゴールドA 44錠", weight: "", photo: UIImage(systemName: "pill.fill")!, barcodePhoto: nil),
             ]
             return vm
         }())
