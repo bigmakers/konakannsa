@@ -6,5 +6,7 @@
 	<string>コナモン</string>
 	<key>NSCameraUsageDescription</key>
 	<string>医薬品のバーコードスキャンと写真撮影のためにカメラを使用します。</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
