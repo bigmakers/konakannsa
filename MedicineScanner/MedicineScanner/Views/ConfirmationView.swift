@@ -267,8 +267,8 @@ struct ConfirmationView: View {
     NavigationStack {
         ConfirmationView(
             photo: UIImage(systemName: "pill.fill")!,
-            medicineName: "ロキソニンS 12錠",
-            weight: .constant("12.5"),
+            medicineName: "アレグラFX 28錠",
+            weight: .constant("6.8"),
             batchCount: 2,
             onAddToList: {},
             onRetake: {}

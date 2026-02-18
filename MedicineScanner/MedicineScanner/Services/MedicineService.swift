@@ -7,9 +7,6 @@ struct MedicineService {
     // MARK: - Built-in Database
 
     private static let builtInDatabase: [String: String] = [
-        "4987123456789": "ロキソニンS 12錠",
-        "4987234567890": "バファリンA 20錠",
-        "4987345678901": "パブロンゴールドA 44包",
         "4987067258017": "アレグラFX 28錠",
         "4987306048485": "パブロンSゴールドW 60錠",
     ]

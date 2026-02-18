@@ -240,9 +240,8 @@ struct BatchConfirmationView: View {
         BatchConfirmationView(viewModel: {
             let vm = ScannerViewModel()
             vm.scannedItems = [
-                ScannedItem(barcode: "4987123456789", medicineName: "ロキソニンS 12錠", weight: "12.5", photo: UIImage(systemName: "pill.fill")!),
-                ScannedItem(barcode: "4987234567890", medicineName: "バファリンA 20錠", weight: "8.3", photo: UIImage(systemName: "pill.fill")!),
-                ScannedItem(barcode: "4987345678901", medicineName: "パブロンゴールドA 44錠", weight: "", photo: UIImage(systemName: "pill.fill")!),
+                ScannedItem(barcode: "4987067258017", medicineName: "アレグラFX 28錠", weight: "6.8", photo: UIImage(systemName: "pill.fill")!),
+                ScannedItem(barcode: "4987306048485", medicineName: "パブロンSゴールドW 60錠", weight: "15.0", photo: UIImage(systemName: "pill.fill")!),
             ]
             return vm
         }())
