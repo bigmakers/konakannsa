@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>コナモン - バーコード読取 &amp; 秤量記録 印刷アプリ</title>
-  <meta name="description" content="医薬品のバーコードをスキャンし、秤（はかり）の重量表示を撮影して、AirPrintで記録を印刷。複数の薬品をA4にまとめて一括印刷も可能。">
+  <title>コナモン - 散剤鑑査記録システム</title>
+  <meta name="description" content="医薬品バーコードをスキャンして秤の写真を撮影。薬品名・ID・秤量をAirPrintで印刷。バッチまとめ印刷・ジャーナル印刷・58mmレシート対応。薬局向け散剤鑑査記録iOSアプリ。">
   <style>
     :root {
+      --orange: #FF9500;
+      --orange-dark: #e08600;
       --primary: #000000;
       --hero-bg: #000000;
       --hero-text: #ffffff;
@@ -22,40 +24,18 @@
       --text-secondary: #666666;
       --text-muted: #888888;
       --border-strong: #000000;
-      --btn-hero-bg: #ffffff;
-      --btn-hero-text: #000000;
-      --btn-hero-hover-bg: transparent;
-      --btn-hero-hover-text: #ffffff;
-      --btn-outline-border: #666666;
-      --btn-outline-hover: #ffffff;
       --step-bg: #000000;
       --step-text: #ffffff;
       --step-sub: #888888;
-      --spec-bg: #ffffff;
       --footer-bg: #000000;
       --footer-text: #666666;
       --footer-logo: #ffffff;
-      --scan-border: #ffffff;
-      --badge-bg: rgba(255,255,255,0.1);
-      --badge-border: rgba(255,255,255,0.2);
-      --phone-btn-bg: #ffffff;
-      --phone-btn-text: #000000;
-      --list-bg: #ffffff;
-      --list-border: #e0e0e0;
-      --thumb-bg: #f0f0f0;
-      --thumb-border: #e0e0e0;
-      --a4-photo-bg: #f0f0f0;
-      --number-color: #c0c0c0;
       --radius-btn: 0px;
       --radius-card: 0px;
       --radius-phone: 40px;
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
@@ -66,7 +46,6 @@
     }
 
     /* ── Nav ─────────────────────────────────────── */
-
     nav {
       position: fixed;
       top: 0;
@@ -77,7 +56,6 @@
       border-bottom: 1px solid var(--nav-border);
       z-index: 100;
     }
-
     nav .inner {
       max-width: 1080px;
       margin: 0 auto;
@@ -86,7 +64,6 @@
       align-items: center;
       justify-content: space-between;
     }
-
     nav .logo {
       font-size: 1.1rem;
       font-weight: 800;
@@ -94,13 +71,14 @@
       text-decoration: none;
       letter-spacing: -0.02em;
     }
-
+    nav .logo span {
+      color: var(--orange);
+    }
     nav .nav-links {
       display: flex;
       gap: 24px;
       list-style: none;
     }
-
     nav .nav-links a {
       color: var(--text-secondary);
       text-decoration: none;
@@ -109,20 +87,23 @@
       letter-spacing: 0.02em;
       transition: color 0.2s;
     }
-
-    nav .nav-links a:hover {
-      color: var(--text);
-    }
+    nav .nav-links a:hover { color: var(--text); }
 
     /* ── Hero ─────────────────────────────────────── */
-
     .hero {
       padding: 160px 24px 100px;
       text-align: center;
       background: var(--hero-bg);
       color: var(--hero-text);
     }
-
+    .hero .eyebrow {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
     .hero h1 {
       font-size: clamp(2.2rem, 6vw, 4rem);
       font-weight: 900;
@@ -130,15 +111,13 @@
       letter-spacing: -0.03em;
       margin-bottom: 24px;
     }
-
     .hero .subtitle {
-      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      font-size: clamp(1rem, 2.5vw, 1.15rem);
       color: var(--hero-sub);
-      max-width: 620px;
+      max-width: 600px;
       margin: 0 auto 48px;
       font-weight: 400;
     }
-
     .hero .cta-group {
       display: flex;
       gap: 16px;
@@ -160,30 +139,20 @@
       cursor: pointer;
       letter-spacing: 0.02em;
     }
-
-    .btn-primary {
-      background: var(--btn-hero-bg);
-      color: var(--btn-hero-text);
-      border-color: var(--btn-hero-bg);
+    .btn-orange {
+      background: var(--orange);
+      color: #fff;
+      border-color: var(--orange);
     }
-
-    .btn-primary:hover {
-      background: var(--btn-hero-hover-bg);
-      color: var(--btn-hero-hover-text);
-    }
-
+    .btn-orange:hover { background: var(--orange-dark); border-color: var(--orange-dark); }
     .btn-outline {
       background: transparent;
-      color: var(--hero-text);
-      border-color: var(--btn-outline-border);
+      color: #fff;
+      border-color: #666;
     }
-
-    .btn-outline:hover {
-      border-color: var(--btn-outline-hover);
-    }
+    .btn-outline:hover { border-color: #fff; }
 
     /* ── Phone Mockup ─────────────────────────────── */
-
     .hero-visual {
       margin-top: 80px;
       display: flex;
@@ -191,7 +160,6 @@
       gap: 32px;
       flex-wrap: wrap;
     }
-
     .phone-frame {
       width: 260px;
       height: 520px;
@@ -200,7 +168,6 @@
       padding: 10px;
       border: 2px solid #555;
     }
-
     .phone-screen {
       width: 100%;
       height: 100%;
@@ -210,145 +177,176 @@
       display: flex;
       flex-direction: column;
     }
-
-    .phone-status-bar {
+    .phone-nav {
       height: 44px;
-      background: #111;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      font-size: 12px;
+      color: #fff;
+      font-weight: 700;
+      border-bottom: 1px solid #333;
+      backdrop-filter: blur(10px);
+    }
+    .phone-nav-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
-      color: #fff;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      border-bottom: 1px solid #333;
+      font-size: 13px;
     }
-
     .phone-content {
       flex: 1;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
-      padding: 20px;
+      padding: 16px;
       position: relative;
     }
-
-    .phone-content.scanner-bg {
-      background: #111;
-    }
-
-    .phone-content.list-bg {
-      background: var(--bg-alt);
+    .phone-content.scanner-bg { background: #111; }
+    .phone-content.home-bg {
+      background: #f2f2f7;
       justify-content: flex-start;
-      padding-top: 12px;
+      padding-top: 16px;
     }
 
+    /* scanner overlay */
     .scan-overlay {
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -60%);
+      transform: translate(-50%, -65%);
       width: 160px;
-      height: 100px;
-      border: 2px solid var(--scan-border);
+      height: 90px;
+      border: 2px solid rgba(255,255,255,0.8);
       border-radius: 4px;
     }
-
-    .scan-overlay::before {
+    .scan-overlay::after {
       content: "";
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
+      left: 0; right: 0;
       height: 2px;
-      background: var(--scan-border);
+      background: var(--orange);
       animation: scanLine 2s ease-in-out infinite;
+      top: 0;
     }
+    @keyframes scanLine { 0%,100%{top:0} 50%{top:calc(100% - 2px)} }
 
-    @keyframes scanLine {
-      0%, 100% { top: 0; }
-      50% { top: calc(100% - 2px); }
-    }
-
-    .phone-badge {
-      background: var(--badge-bg);
-      border: 1px solid var(--badge-border);
-      padding: 10px 16px;
+    .green-badge {
+      background: #34C759;
       border-radius: 4px;
       color: #fff;
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 700;
       text-align: center;
-      margin-bottom: 10px;
-    }
-
-    .phone-btn {
-      padding: 14px;
-      border-radius: 4px;
-      font-size: 14px;
-      font-weight: 700;
-      text-align: center;
-      background: var(--phone-btn-bg);
-      color: var(--phone-btn-text);
-    }
-
-    .list-item {
-      background: var(--list-bg);
-      border: 1px solid var(--list-border);
-      border-radius: 4px;
-      padding: 12px;
+      padding: 7px 10px;
       margin-bottom: 8px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: center;
+      gap: 5px;
+    }
+    .medicine-badge {
+      background: rgba(0,0,0,0.8);
+      border-radius: 4px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      padding: 9px 10px;
+      margin-bottom: 6px;
+    }
+    .phone-btn-blue {
+      padding: 13px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+      background: #007AFF;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .phone-btn-gray {
+      padding: 9px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      background: rgba(255,255,255,0.15);
+      color: #fff;
     }
 
-    .list-thumb {
-      width: 44px;
-      height: 44px;
-      background: var(--thumb-bg);
-      border: 1px solid var(--thumb-border);
-      border-radius: 4px;
+    /* home screen mock */
+    .home-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .home-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--text);
-      font-family: "SF Mono", "Menlo", monospace;
+      font-size: 18px;
+      flex-shrink: 0;
     }
-
-    .list-text {
-      font-size: 12px;
+    .home-card-text { font-size: 12px; font-weight: 700; color: #000; }
+    .home-card-sub  { font-size: 10px; color: #888; }
+    .home-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .home-grid-item {
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px 6px;
+      text-align: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .home-grid-icon { font-size: 18px; margin-bottom: 4px; }
+    .home-grid-label { font-size: 9px; font-weight: 700; color: #000; }
+    .home-start-btn {
+      background: var(--orange);
+      color: #fff;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 13px;
       font-weight: 700;
-      color: var(--text);
-    }
-
-    .list-sub {
-      font-size: 10px;
-      color: var(--text-muted);
-      font-weight: 500;
-      font-family: "SF Mono", "Menlo", monospace;
+      text-align: center;
+      margin-top: 4px;
     }
 
     /* ── Sections ─────────────────────────────────── */
-
-    section {
-      padding: 100px 24px;
+    section { padding: 100px 24px; }
+    .section-header { text-align: center; margin-bottom: 64px; }
+    .section-header .eyebrow {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 12px;
     }
-
-    .section-header {
-      text-align: center;
-      margin-bottom: 64px;
-    }
-
     .section-header h2 {
       font-size: clamp(1.6rem, 4vw, 2.6rem);
       font-weight: 900;
       letter-spacing: -0.02em;
       margin-bottom: 12px;
     }
-
     .section-header p {
       font-size: 1rem;
       color: var(--text-secondary);
@@ -357,7 +355,6 @@
     }
 
     /* ── Features ─────────────────────────────────── */
-
     .features-grid {
       max-width: 1080px;
       margin: 0 auto;
@@ -365,35 +362,27 @@
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 2px;
     }
-
     .feature-card {
       background: var(--card-bg);
       padding: 40px 32px;
       border: 1px solid var(--card-border);
-      border-radius: var(--radius-card);
       transition: background 0.2s;
     }
-
-    .feature-card:hover {
-      background: var(--card-hover);
-    }
-
+    .feature-card:hover { background: var(--card-hover); }
     .feature-number {
       font-size: 0.75rem;
       font-weight: 800;
-      color: var(--number-color);
+      color: #c0c0c0;
       letter-spacing: 0.1em;
       margin-bottom: 16px;
       font-family: "SF Mono", "Menlo", monospace;
     }
-
     .feature-card h3 {
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       font-weight: 800;
       margin-bottom: 10px;
       letter-spacing: -0.01em;
     }
-
     .feature-card p {
       color: var(--text-secondary);
       font-size: 0.92rem;
@@ -401,39 +390,27 @@
     }
 
     /* ── How it works ─────────────────────────────── */
-
     .how-it-works {
       background: var(--step-bg);
       color: var(--step-text);
     }
-
-    .how-it-works .section-header h2 {
-      color: var(--step-text);
-    }
-
-    .how-it-works .section-header p {
-      color: var(--step-sub);
-    }
-
+    .how-it-works .section-header h2 { color: #fff; }
+    .how-it-works .section-header p  { color: var(--step-sub); }
     .steps {
       max-width: 1080px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 48px;
     }
-
-    .step {
-      text-align: center;
-    }
-
+    .step { text-align: center; }
     .step-number {
       width: 56px;
       height: 56px;
       margin: 0 auto 20px;
-      border: 2px solid var(--step-text);
+      border: 2px solid var(--orange);
       border-radius: var(--radius-btn);
-      color: var(--step-text);
+      color: var(--orange);
       font-size: 1.3rem;
       font-weight: 900;
       display: flex;
@@ -441,156 +418,285 @@
       justify-content: center;
       font-family: "SF Mono", "Menlo", monospace;
     }
+    .step h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 10px; }
+    .step p   { font-size: 0.9rem; color: var(--step-sub); line-height: 1.8; }
 
-    .step h3 {
-      font-size: 1.1rem;
-      font-weight: 800;
-      margin-bottom: 10px;
+    /* ── Print section ────────────────────────────── */
+    .print-section { background: var(--bg-alt); }
+    .print-types {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 32px;
     }
-
-    .step p {
+    .print-type-card {
+      background: #fff;
+      border: 2px solid var(--card-border);
+      padding: 36px 28px;
+    }
+    .print-type-card h3 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .print-type-card .desc {
       font-size: 0.9rem;
-      color: var(--step-sub);
+      color: var(--text-secondary);
+      margin-bottom: 20px;
       line-height: 1.8;
     }
-
-    /* ── Print Layout Demo ────────────────────────── */
-
-    .print-demo {
-      max-width: 760px;
-      margin: 0 auto;
-    }
-
-    .a4-preview {
-      background: var(--bg);
-      border: 2px solid var(--border-strong);
-      padding: 36px 28px;
-      aspect-ratio: 210 / 297;
-      max-height: 560px;
+    /* A4 batch grid mock */
+    .a4-mock {
+      background: #fff;
+      border: 1.5px solid #000;
+      padding: 12px 10px;
+      aspect-ratio: 210/297;
+      max-height: 280px;
       display: flex;
       flex-direction: column;
-      margin: 0 auto;
-      max-width: 380px;
     }
-
-    .a4-header {
-      font-size: 14px;
-      font-weight: 900;
-      color: var(--text);
-      margin-bottom: 4px;
+    .a4-mock-header {
+      font-size: 7px;
+      font-weight: 800;
+      margin-bottom: 2px;
     }
-
-    .a4-date {
-      font-size: 10px;
-      color: var(--text-muted);
-      font-family: "SF Mono", "Menlo", monospace;
-      margin-bottom: 16px;
-      padding-bottom: 12px;
-      border-bottom: 2px solid var(--border-strong);
+    .a4-mock-date {
+      font-size: 5px;
+      color: #888;
+      font-family: monospace;
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #000;
     }
-
-    .a4-grid {
+    .a4-mock-grid {
       flex: 1;
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 3px;
     }
-
-    .a4-cell {
-      border: 1px solid var(--card-border);
-      padding: 10px;
+    .a4-mock-cell {
+      background: #f5f5f5;
+      border-radius: 2px;
+      padding: 4px 3px;
       display: flex;
       flex-direction: column;
+      gap: 2px;
     }
-
-    .a4-cell-name {
-      font-size: 9px;
+    .a4-mock-cell-label {
+      font-size: 4px;
       font-weight: 800;
-      margin-bottom: 6px;
+      color: #333;
     }
-
-    .a4-cell-photo {
+    .a4-mock-cell-weight {
+      font-size: 5px;
+      font-weight: 700;
+      color: #555;
+      font-family: monospace;
+    }
+    .a4-mock-cell-photo {
       flex: 1;
-      background: var(--a4-photo-bg);
-      border: 1px solid var(--card-border);
+      background: #ddd;
+      border-radius: 1px;
+      min-height: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      font-size: 8px;
+    }
+    /* Journal mock */
+    .journal-mock {
+      background: #fff;
+      border: 1.5px solid #000;
+      padding: 12px 10px;
+      max-height: 280px;
+      overflow: hidden;
+    }
+    .journal-mock-header {
+      font-size: 7px;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+    .journal-mock-sub {
+      font-size: 5px;
+      color: #888;
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #000;
+      font-family: monospace;
+    }
+    .journal-mock-cols {
+      display: grid;
+      grid-template-columns: 50px 30px 1fr 40px;
+      gap: 2px;
+      margin-bottom: 4px;
+    }
+    .journal-mock-col-head {
+      font-size: 4px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+    }
+    .journal-mock-row {
+      display: grid;
+      grid-template-columns: 50px 30px 1fr 40px;
+      gap: 2px;
+      padding: 4px 0;
+      border-bottom: 0.5px solid #eee;
+    }
+    .journal-mock-cell {
+      font-size: 4.5px;
+      font-family: monospace;
+      color: #333;
+    }
+
+    /* ── History section ──────────────────────────── */
+    .history-section { background: #fff; }
+    .history-features {
+      max-width: 800px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 32px;
+    }
+    .history-item {
+      text-align: center;
+      padding: 32px 20px;
+      border: 1px solid var(--card-border);
+    }
+    .history-item .icon {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+    }
+    .history-item h3 {
+      font-size: 1rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .history-item p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    /* ── Plan section ─────────────────────────────── */
+    .plan-section { background: #000; color: #fff; }
+    .plan-section .section-header h2 { color: #fff; }
+    .plan-section .section-header p  { color: #888; }
+    .plans {
+      max-width: 720px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+    }
+    .plan-card {
+      padding: 40px 32px;
+      border: 1px solid #333;
+    }
+    .plan-card.featured {
+      border-color: var(--orange);
+      position: relative;
+    }
+    .plan-badge {
+      position: absolute;
+      top: -1px; right: -1px;
+      background: var(--orange);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      letter-spacing: 0.05em;
+    }
+    .plan-name {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: #888;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .plan-price {
+      font-size: 2rem;
       font-weight: 900;
-      color: var(--text);
-      font-family: "SF Mono", "Menlo", monospace;
-      min-height: 50px;
+      margin-bottom: 4px;
+      letter-spacing: -0.03em;
+    }
+    .plan-price-note {
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 24px;
+    }
+    .plan-features {
+      list-style: none;
+    }
+    .plan-features li {
+      font-size: 0.88rem;
+      color: #ccc;
+      padding: 6px 0;
+      border-bottom: 1px solid #222;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .plan-features li::before {
+      content: "✓";
+      color: var(--orange);
+      font-weight: 700;
+      flex-shrink: 0;
     }
 
     /* ── Tech Specs ───────────────────────────────── */
-
     .specs-section {
       background: var(--bg-alt);
       border-top: 2px solid var(--border-strong);
       border-bottom: 2px solid var(--border-strong);
     }
-
-    .specs {
-      max-width: 1080px;
-      margin: 0 auto;
-    }
-
+    .specs { max-width: 1080px; margin: 0 auto; }
     .specs-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 2px;
     }
-
     .spec-item {
       padding: 28px 20px;
-      background: var(--spec-bg);
+      background: #fff;
       border: 1px solid var(--card-border);
       text-align: center;
     }
-
     .spec-item .label {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.1em;
       margin-bottom: 8px;
       font-weight: 600;
     }
-
     .spec-item .value {
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 800;
     }
 
     /* ── Footer ───────────────────────────────────── */
-
     footer {
       background: var(--footer-bg);
       color: var(--footer-text);
       padding: 48px 24px;
       text-align: center;
     }
-
-    footer .footer-inner {
-      max-width: 1080px;
-      margin: 0 auto;
-    }
-
+    footer .footer-inner { max-width: 1080px; margin: 0 auto; }
     footer .footer-logo {
       font-size: 1rem;
       font-weight: 800;
-      color: var(--footer-logo);
+      color: #fff;
       margin-bottom: 10px;
     }
-
-    footer p {
-      font-size: 0.82rem;
-      line-height: 1.9;
-    }
+    footer .footer-logo span { color: var(--orange); }
+    footer p { font-size: 0.82rem; line-height: 1.9; }
+    footer a { color: #888; text-decoration: none; }
+    footer a:hover { color: #ccc; }
 
     /* ── Responsive ───────────────────────────────── */
-
     @media (max-width: 640px) {
       .nav-links { display: none; }
       .hero { padding: 130px 20px 70px; }
@@ -598,6 +704,7 @@
       section { padding: 64px 20px; }
       .steps { gap: 32px; }
       .features-grid { gap: 0; }
+      .plans { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -606,13 +713,13 @@
   <!-- Nav -->
   <nav>
     <div class="inner">
-      <a href="#" class="logo">コナモン</a>
+      <a href="#" class="logo">コナモン<span>.</span></a>
       <ul class="nav-links">
         <li><a href="#features">機能</a></li>
         <li><a href="#how-it-works">使い方</a></li>
-        <li><a href="#batch-print">まとめて印刷</a></li>
+        <li><a href="#print">印刷</a></li>
+        <li><a href="#plan">プラン</a></li>
         <li><a href="#specs">仕様</a></li>
-        <li><a href="privacy.html">プライバシー</a></li>
         <li><a href="support.html">サポート</a></li>
       </ul>
     </div>
@@ -620,16 +727,17 @@
 
   <!-- Hero -->
   <section class="hero">
+    <div class="eyebrow">散剤鑑査記録システム</div>
     <h1>
-      スキャン、秤量、<br>
+      スキャンして、撮影して、<br>
       そのまま印刷。
     </h1>
     <p class="subtitle">
-      医薬品のバーコードを読み取り、はかりの重量表示を撮影。<br>
-      薬品名と秤量記録をAirPrintで即座に印刷できます。
+      医薬品バーコードを読み取り、はかりを撮影するだけ。<br>
+      薬品名・ID・秤量をAirPrintで即座に印刷します。
     </p>
     <div class="cta-group">
-      <a href="#how-it-works" class="btn btn-primary">使い方を見る</a>
+      <a href="#how-it-works" class="btn btn-orange">使い方を見る</a>
       <a href="#specs" class="btn btn-outline">技術仕様</a>
     </div>
 
@@ -638,36 +746,58 @@
       <!-- Scanner screen -->
       <div class="phone-frame">
         <div class="phone-screen">
-          <div class="phone-status-bar">コナモン</div>
+          <div class="phone-nav">
+            <div class="phone-nav-icon">🏠</div>
+            <span style="font-size:13px;">鑑査スキャナー</span>
+            <div class="phone-nav-icon">🔦</div>
+          </div>
           <div class="phone-content scanner-bg">
             <div class="scan-overlay"></div>
-            <div class="phone-badge">アレグラFX 28錠</div>
-            <div class="phone-btn">撮影する</div>
+            <div class="medicine-badge">プランルカスト DS10%</div>
+            <div class="green-badge">✓ バーコード記録完了</div>
+            <div class="phone-btn-blue">📷 秤を撮影</div>
+            <div class="phone-btn-gray" style="margin-top:6px;">⬚ もう一度スキャン</div>
           </div>
         </div>
       </div>
 
-      <!-- Batch list screen -->
+      <!-- Home screen -->
       <div class="phone-frame">
         <div class="phone-screen">
-          <div class="phone-status-bar">お薬リスト</div>
-          <div class="phone-content list-bg">
-            <div class="list-item">
-              <div class="list-thumb">6.8g</div>
+          <div class="phone-nav" style="background:#f2f2f7; border-bottom:1px solid #e0e0e0;">
+            <span></span>
+            <span style="font-size:11px; color:#000;">22:53</span>
+            <span style="font-size:10px; color:#000;">●●●</span>
+          </div>
+          <div class="phone-content home-bg">
+            <div style="text-align:center; padding: 8px 0 12px;">
+              <div style="font-size:24px; color: #FF9500;">⬛</div>
+              <div style="font-size:11px; font-weight:800; color:#000; margin-top:4px;">散剤鑑査記録システム</div>
+              <div style="font-size:10px; color:#888;">コナモン</div>
+            </div>
+            <div class="home-card">
+              <div class="home-icon" style="background:#f0f0f0;">🔦</div>
               <div>
-                <div class="list-text">アレグラFX 28錠</div>
-                <div class="list-sub">4987067258017</div>
+                <div class="home-card-text">ライト</div>
+                <div class="home-card-sub">OFF</div>
               </div>
             </div>
-            <div class="list-item">
-              <div class="list-thumb">15.0g</div>
-              <div>
-                <div class="list-text">パブロンSゴールドW 60錠</div>
-                <div class="list-sub">4987306048485</div>
+            <div class="home-grid">
+              <div class="home-grid-item">
+                <div class="home-grid-icon">🕐</div>
+                <div class="home-grid-label">履歴</div>
+              </div>
+              <div class="home-grid-item">
+                <div class="home-grid-icon">⚙️</div>
+                <div class="home-grid-label">設定</div>
+              </div>
+              <div class="home-grid-item">
+                <div class="home-grid-icon">📋</div>
+                <div class="home-grid-label">医薬品</div>
               </div>
             </div>
-            <div style="flex: 1;"></div>
-            <div class="phone-btn" style="margin-top: 12px;">まとめて印刷（2件）</div>
+            <div style="flex:1;"></div>
+            <div class="home-start-btn">📷 鑑査開始</div>
           </div>
         </div>
       </div>
@@ -677,29 +807,40 @@
   <!-- Features -->
   <section id="features">
     <div class="section-header">
+      <div class="eyebrow">Features</div>
       <h2>主な機能</h2>
-      <p>秤量記録の現場で必要な機能をシンプルにまとめました</p>
+      <p>散剤鑑査の現場で必要な機能をひとつのアプリに</p>
     </div>
     <div class="features-grid">
       <div class="feature-card">
         <div class="feature-number">01</div>
         <h3>バーコードスキャン</h3>
-        <p>EAN-13（JAN）、EAN-8、GS1 DataBar に対応。カメラを向けるだけで瞬時に薬品名を表示します。</p>
+        <p>EAN-13（JAN）・EAN-8・GS1 DataBar に対応。カメラを向けるだけで薬品名を自動表示。未登録バーコードはその場で登録できます。</p>
       </div>
       <div class="feature-card">
         <div class="feature-number">02</div>
-        <h3>秤量表示の撮影</h3>
-        <p>はかりの重量表示をそのまま撮影。バーコード読み取りから秤量記録までワンフローで完結します。</p>
+        <h3>バーコード写真の自動取得</h3>
+        <p>スキャン時にバーコード部分のクロップ写真を自動取得。ラプラシアン分散によるシャープネス評価で最も鮮明なフレームを保存します。</p>
       </div>
       <div class="feature-card">
         <div class="feature-number">03</div>
-        <h3>AirPrint 印刷</h3>
-        <p>薬品名 + タイムスタンプ + 秤量写真を自動レイアウト。A4・ラベルの2種類のページサイズに対応。</p>
+        <h3>秤量撮影 &amp; テンキー入力</h3>
+        <p>はかりの画面をそのまま撮影。タップフォーカスで数値に素早くピントを合わせ、テンキーで秤量値（g）を入力して記録します。</p>
       </div>
       <div class="feature-card">
         <div class="feature-number">04</div>
-        <h3>まとめて印刷</h3>
-        <p>複数の薬品をリストに追加し、A4用紙に2列グリッドで一括印刷。件数に応じてサイズを自動調整。</p>
+        <h3>写真付き印刷</h3>
+        <p>日付・ID・薬品名・秤量値・バーコード写真・秤量写真を4列5行グリッドでA4に自動レイアウト。最大20件を1枚に印刷できます。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">05</div>
+        <h3>ジャーナル印刷</h3>
+        <p>日付・ID・薬品名・バーコード・秤量をリスト形式で印刷。A4縦または58mmレシートロール（CT-S251等）に対応します。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">06</div>
+        <h3>スキャン履歴</h3>
+        <p>過去7日間の鑑査記録を自動保存。ID・薬品名・バーコードで検索でき、スワイプ操作で削除・再印刷が可能です。</p>
       </div>
     </div>
   </section>
@@ -707,48 +848,208 @@
   <!-- How it works -->
   <section id="how-it-works" class="how-it-works">
     <div class="section-header">
+      <div class="eyebrow" style="color: var(--orange);">How it works</div>
       <h2>3ステップで完了</h2>
       <p>直感的な操作で誰でもすぐに使い始められます</p>
     </div>
     <div class="steps">
       <div class="step">
         <div class="step-number">1</div>
-        <h3>スキャン</h3>
-        <p>カメラを起動して医薬品のバーコードを読み取り。薬品名が自動で表示されます。</p>
+        <h3>バーコードをスキャン</h3>
+        <p>カメラを起動して医薬品のバーコードにかざすだけ。薬品名が自動表示され、バーコード写真も自動取得されます。</p>
       </div>
       <div class="step">
         <div class="step-number">2</div>
-        <h3>秤量撮影</h3>
-        <p>はかりの重量表示を撮影して記録。リストに追加して次の薬品も続けてスキャンできます。</p>
+        <h3>秤を撮影・秤量入力</h3>
+        <p>はかりの重量表示を撮影し、テンキーで秤量値を入力。リストに追加して次の薬品も続けてスキャンできます。</p>
       </div>
       <div class="step">
         <div class="step-number">3</div>
-        <h3>印刷</h3>
-        <p>1件ずつ、またはまとめてA4用紙にAirPrint印刷。そのまま秤量記録として保管できます。</p>
+        <h3>AirPrintで印刷</h3>
+        <p>1件ずつ印刷、またはバッチリストにまとめてA4一括印刷。ジャーナル形式での印刷も選べます。</p>
+      </div>
+      <div class="step">
+        <div class="step-number">4</div>
+        <h3>履歴で確認・再印刷</h3>
+        <p>鑑査記録は自動で7日間保存。後から検索・再印刷できるので記録の抜けを防げます。</p>
       </div>
     </div>
   </section>
 
-  <!-- Batch Print Demo -->
-  <section id="batch-print">
+  <!-- Print -->
+  <section id="print" class="print-section">
     <div class="section-header">
-      <h2>A4 まとめて印刷</h2>
-      <p>複数の薬品の秤量記録を1枚のA4にまとめて印刷</p>
+      <div class="eyebrow">Print</div>
+      <h2>2種類の印刷形式</h2>
+      <p>用途に合わせて印刷形式を選べます</p>
     </div>
-    <div class="print-demo">
-      <div class="a4-preview">
-        <div class="a4-header">お薬一覧（2件）</div>
-        <div class="a4-date">2026/02/14 12:00</div>
-        <div class="a4-grid">
-          <div class="a4-cell">
-            <div class="a4-cell-name">アレグラFX 28錠</div>
-            <div class="a4-cell-photo">6.8 g</div>
-          </div>
-          <div class="a4-cell">
-            <div class="a4-cell-name">パブロンSゴールドW 60錠</div>
-            <div class="a4-cell-photo">15.0 g</div>
+    <div class="print-types">
+      <!-- 写真付き印刷 -->
+      <div class="print-type-card">
+        <h3>📄 写真付き印刷</h3>
+        <p class="desc">日付・ID・薬品名・秤量・バーコード写真・秤量写真を4列5行グリッドでA4に一括印刷。最大20件を1枚に収めます。</p>
+        <div class="a4-mock">
+          <div class="a4-mock-header">お薬一覧（8件）</div>
+          <div class="a4-mock-date">2026/02/18 09:15 ───────────────────────</div>
+          <div class="a4-mock-grid">
+            <div class="a4-mock-cell">
+              <div class="a4-mock-cell-label">プランルカスト DS10%</div>
+              <div class="a4-mock-cell-weight">7.11g</div>
+              <div class="a4-mock-cell-photo">📷</div>
+            </div>
+            <div class="a4-mock-cell">
+              <div class="a4-mock-cell-label">アレグラFX 28錠</div>
+              <div class="a4-mock-cell-weight">6.80g</div>
+              <div class="a4-mock-cell-photo">📷</div>
+            </div>
+            <div class="a4-mock-cell">
+              <div class="a4-mock-cell-label">ムコダインDS50%</div>
+              <div class="a4-mock-cell-weight">3.20g</div>
+              <div class="a4-mock-cell-photo">📷</div>
+            </div>
+            <div class="a4-mock-cell">
+              <div class="a4-mock-cell-label">ビオフェルミンR散</div>
+              <div class="a4-mock-cell-weight">1.50g</div>
+              <div class="a4-mock-cell-photo">📷</div>
+            </div>
+            <div class="a4-mock-cell">
+              <div class="a4-mock-cell-label">カルボシステイン</div>
+              <div class="a4-mock-cell-weight">4.00g</div>
+              <div class="a4-mock-cell-photo">📷</div>
+            </div>
+            <div class="a4-mock-cell">
+              <div class="a4-mock-cell-label">クラリスDS10%</div>
+              <div class="a4-mock-cell-weight">2.10g</div>
+              <div class="a4-mock-cell-photo">📷</div>
+            </div>
+            <div class="a4-mock-cell">
+              <div class="a4-mock-cell-label">ロキソニン細粒</div>
+              <div class="a4-mock-cell-weight">5.00g</div>
+              <div class="a4-mock-cell-photo">📷</div>
+            </div>
+            <div class="a4-mock-cell">
+              <div class="a4-mock-cell-label">セフジニルDS</div>
+              <div class="a4-mock-cell-weight">3.60g</div>
+              <div class="a4-mock-cell-photo">📷</div>
+            </div>
           </div>
         </div>
+      </div>
+
+      <!-- ジャーナル印刷 -->
+      <div class="print-type-card">
+        <h3>🗒️ ジャーナル印刷</h3>
+        <p class="desc">日付・ID・薬品名・バーコード・秤量をリスト形式で印刷。A4縦または58mmレシートロール（CT-S251等）に対応。</p>
+        <div class="journal-mock">
+          <div class="journal-mock-header">秤量ジャーナル</div>
+          <div class="journal-mock-sub">2026/02/18 09:15 ──────────────────────────</div>
+          <div class="journal-mock-cols">
+            <div class="journal-mock-col-head">日付</div>
+            <div class="journal-mock-col-head">ID</div>
+            <div class="journal-mock-col-head">医薬品名</div>
+            <div class="journal-mock-col-head">秤量(g)</div>
+          </div>
+          <div class="journal-mock-row">
+            <div class="journal-mock-cell">2/18 09:11</div>
+            <div class="journal-mock-cell">#000001</div>
+            <div class="journal-mock-cell">プランルカスト DS10%</div>
+            <div class="journal-mock-cell">7.11</div>
+          </div>
+          <div class="journal-mock-row">
+            <div class="journal-mock-cell">2/18 09:12</div>
+            <div class="journal-mock-cell">#000002</div>
+            <div class="journal-mock-cell">アレグラFX 28錠</div>
+            <div class="journal-mock-cell">6.80</div>
+          </div>
+          <div class="journal-mock-row">
+            <div class="journal-mock-cell">2/18 09:13</div>
+            <div class="journal-mock-cell">#000003</div>
+            <div class="journal-mock-cell">ムコダインDS50%</div>
+            <div class="journal-mock-cell">3.20</div>
+          </div>
+          <div class="journal-mock-row">
+            <div class="journal-mock-cell">2/18 09:14</div>
+            <div class="journal-mock-cell">#000004</div>
+            <div class="journal-mock-cell">ビオフェルミンR散</div>
+            <div class="journal-mock-cell">1.50</div>
+          </div>
+          <div class="journal-mock-row">
+            <div class="journal-mock-cell">2/18 09:15</div>
+            <div class="journal-mock-cell">#000005</div>
+            <div class="journal-mock-cell">カルボシステイン</div>
+            <div class="journal-mock-cell">4.00</div>
+          </div>
+          <div style="font-size:5px; font-weight:800; margin-top:8px; border-top:1px solid #000; padding-top:4px;">合計: 5件</div>
+        </div>
+        <div style="margin-top: 16px; padding: 12px 14px; background: #f5f5f5; font-size: 0.82rem; color: #666; line-height: 1.7;">
+          📠 58mmレシートロール（CT-S251等）にも対応
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- History -->
+  <section id="history" class="history-section">
+    <div class="section-header">
+      <div class="eyebrow">History</div>
+      <h2>スキャン履歴</h2>
+      <p>鑑査記録を自動保存。後からすぐに検索・再印刷できます</p>
+    </div>
+    <div class="history-features">
+      <div class="history-item">
+        <div class="icon">📅</div>
+        <h3>7日間自動保存</h3>
+        <p>スキャンするたびに自動で履歴に記録。過去7日分の鑑査記録をいつでも確認できます。</p>
+      </div>
+      <div class="history-item">
+        <div class="icon">🔍</div>
+        <h3>検索機能</h3>
+        <p>ID・薬品名・バーコードで絞り込み検索。大量の記録の中から素早く目的のデータを見つけられます。</p>
+      </div>
+      <div class="history-item">
+        <div class="icon">🔄</div>
+        <h3>スワイプ操作</h3>
+        <p>左スワイプで削除、右スワイプで再印刷。直感的な操作でその場ですぐに対応できます。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Plan -->
+  <section id="plan" class="plan-section">
+    <div class="section-header">
+      <div class="eyebrow" style="color: var(--orange);">Plan</div>
+      <h2>料金プラン</h2>
+      <p>無料から始めて、必要に応じてプレミアムへ</p>
+    </div>
+    <div class="plans">
+      <div class="plan-card">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">無料</div>
+        <div class="plan-price-note">ずっと無料</div>
+        <ul class="plan-features">
+          <li>薬品登録 最大5品目</li>
+          <li>バーコードスキャン</li>
+          <li>秤量撮影・印刷</li>
+          <li>写真付き印刷（A4）</li>
+          <li>ジャーナル印刷（A4）</li>
+          <li>スキャン履歴（7日間）</li>
+        </ul>
+      </div>
+      <div class="plan-card featured">
+        <div class="plan-badge">PREMIUM</div>
+        <div class="plan-name">Premium</div>
+        <div class="plan-price" style="color: var(--orange);">有料</div>
+        <div class="plan-price-note">買い切り or サブスク</div>
+        <ul class="plan-features">
+          <li>薬品登録 無制限</li>
+          <li>バーコードスキャン</li>
+          <li>秤量撮影・印刷</li>
+          <li>写真付き印刷（A4）</li>
+          <li>ジャーナル印刷（A4 / 58mm）</li>
+          <li>スキャン履歴（7日間）</li>
+          <li>バッチまとめ印刷（最大20件）</li>
+          <li>白黒ハイコントラストモード</li>
+        </ul>
       </div>
     </div>
   </section>
@@ -756,8 +1057,9 @@
   <!-- Tech Specs -->
   <section id="specs" class="specs-section">
     <div class="section-header">
+      <div class="eyebrow">Specs</div>
       <h2>技術仕様</h2>
-      <p>iOS ネイティブフレームワークのみで動作。外部依存ゼロ。</p>
+      <p>iOS ネイティブフレームワークのみ。外部依存ゼロ。</p>
     </div>
     <div class="specs">
       <div class="specs-grid">
@@ -782,8 +1084,8 @@
           <div class="value">AirPrint</div>
         </div>
         <div class="spec-item">
-          <div class="label">レイアウト</div>
-          <div class="value">A4 / ラベル</div>
+          <div class="label">印刷レイアウト</div>
+          <div class="value">A4 / 58mmレシート</div>
         </div>
         <div class="spec-item">
           <div class="label">設計</div>
@@ -793,6 +1095,14 @@
           <div class="label">外部依存</div>
           <div class="value">なし</div>
         </div>
+        <div class="spec-item">
+          <div class="label">バーコード写真</div>
+          <div class="value">自動取得（最高精度）</div>
+        </div>
+        <div class="spec-item">
+          <div class="label">履歴保存</div>
+          <div class="value">7日間</div>
+        </div>
       </div>
     </div>
   </section>
@@ -800,10 +1110,10 @@
   <!-- Footer -->
   <footer>
     <div class="footer-inner">
-      <div class="footer-logo">コナモン</div>
+      <div class="footer-logo">コナモン<span>.</span></div>
       <p>
-        医薬品バーコード読取 &amp; 秤量記録印刷 iOS アプリ<br>
-        <a href="privacy.html" style="color:#888;">プライバシーポリシー</a> ・ <a href="support.html" style="color:#888;">サポート</a>
+        散剤鑑査記録システム — 医薬品バーコード読取 &amp; 秤量記録 印刷 iOS アプリ<br>
+        <a href="privacy.html">プライバシーポリシー</a> ・ <a href="support.html">サポート</a>
       </p>
     </div>
   </footer>
