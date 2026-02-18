@@ -224,7 +224,7 @@ struct ConfirmationView: View {
             photo: photo
         )
 
-        var item = ScannedItem(
+        let item = ScannedItem(
             barcode: "",
             medicineName: medicineName,
             weight: weight,
