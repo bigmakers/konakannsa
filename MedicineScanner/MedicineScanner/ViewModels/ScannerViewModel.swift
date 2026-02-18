@@ -1,12 +1,15 @@
 import AVFoundation
 import SwiftUI
 
-/// A single scanned medicine entry (barcode + name + photo).
+/// A single scanned medicine entry (barcode + name + weight + photo).
 struct ScannedItem: Identifiable {
     let id = UUID()
     let barcode: String
     let medicineName: String
+    var weight: String
     let photo: UIImage
+    /// Assigned after saving to history (for printing).
+    var scanID: Int?
 }
 
 /// Manages the barcode scanning session, medicine lookup, and photo capture flow.
@@ -52,6 +55,15 @@ final class ScannerViewModel: ObservableObject {
     /// Accumulated list of scanned medicines for batch printing.
     @Published var scannedItems: [ScannedItem] = []
 
+    /// Controls display of the registration alert for unregistered barcodes.
+    @Published var showRegistrationAlert = false
+
+    /// Text field binding for the registration alert.
+    @Published var registrationName = ""
+
+    /// Manual weight input.
+    @Published var recognizedWeight: String = ""
+
     // MARK: - Barcode Handling
 
     /// Called by the camera coordinator when a barcode is detected.
@@ -67,13 +79,36 @@ final class ScannerViewModel: ObservableObject {
             speak(name)
         } else {
             medicineName = nil
+            isScanningActive = false
+            showRegistrationAlert = true
+            registrationName = ""
         }
+    }
+
+    /// Registers the current unregistered barcode with a user-supplied name.
+    func registerCurrentBarcode() {
+        guard let barcode = scannedBarcode else { return }
+        let name = registrationName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else {
+            resetScan()
+            return
+        }
+        MedicineService.register(barcode: barcode, name: name)
+        medicineName = name
+        isScanningActive = false
+        speak(name)
     }
 
     /// Called by the camera coordinator when a photo is captured.
     func didCapturePhoto(_ image: UIImage) {
         capturedPhoto = image
         showConfirmation = true
+    }
+
+    /// Clears the photo and returns to camera for retake (keeps barcode/name).
+    func retakePhoto() {
+        capturedPhoto = nil
+        showConfirmation = false
     }
 
     // MARK: - Batch Management
@@ -84,7 +119,12 @@ final class ScannerViewModel: ObservableObject {
               let name = medicineName,
               let photo = capturedPhoto else { return }
 
-        scannedItems.append(ScannedItem(barcode: barcode, medicineName: name, photo: photo))
+        scannedItems.append(ScannedItem(
+            barcode: barcode,
+            medicineName: name,
+            weight: recognizedWeight,
+            photo: photo
+        ))
         resetScan()
     }
 
@@ -98,6 +138,7 @@ final class ScannerViewModel: ObservableObject {
         medicineName = nil
         scannedBarcode = nil
         capturedPhoto = nil
+        recognizedWeight = ""
         showConfirmation = false
         isScanningActive = true
     }

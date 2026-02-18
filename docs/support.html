@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>サポート - コナモン</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      color: #000;
+      background: #fff;
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
+    }
+    nav {
+      position: fixed; top: 0; width: 100%;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid #e0e0e0;
+      z-index: 100;
+    }
+    nav .inner {
+      max-width: 760px; margin: 0 auto; padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    nav .logo {
+      font-size: 1.1rem; font-weight: 800; color: #000;
+      text-decoration: none; letter-spacing: -0.02em;
+    }
+    nav .nav-links { display: flex; gap: 24px; list-style: none; }
+    nav .nav-links a {
+      color: #666; text-decoration: none; font-size: 0.85rem;
+      font-weight: 600; transition: color 0.2s;
+    }
+    nav .nav-links a:hover { color: #000; }
+    .content {
+      max-width: 760px; margin: 0 auto;
+      padding: 120px 24px 80px;
+    }
+    h1 {
+      font-size: 2rem; font-weight: 900; letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 1rem; color: #666; margin-bottom: 48px;
+    }
+    h2 {
+      font-size: 1.2rem; font-weight: 800; margin-top: 40px; margin-bottom: 12px;
+      padding-bottom: 8px; border-bottom: 2px solid #000;
+    }
+    p, li { font-size: 0.95rem; color: #333; }
+    p { margin-bottom: 16px; }
+    ul { margin: 0 0 16px 20px; }
+    li { margin-bottom: 6px; }
+    .contact-box {
+      background: #fafafa; border: 1px solid #e0e0e0;
+      padding: 28px; margin: 24px 0;
+    }
+    .contact-box p { margin-bottom: 8px; }
+    .contact-box .email {
+      font-size: 1.1rem; font-weight: 800; color: #000;
+      text-decoration: none;
+    }
+    .contact-box .email:hover { text-decoration: underline; }
+    .faq-item { margin-bottom: 24px; }
+    .faq-item h3 {
+      font-size: 1rem; font-weight: 800; margin-bottom: 6px;
+    }
+    .faq-item p { color: #444; }
+    footer {
+      background: #000; color: #666; padding: 48px 24px; text-align: center;
+    }
+    footer .footer-logo {
+      font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 10px;
+    }
+    footer p { font-size: 0.82rem; color: #666; line-height: 1.9; }
+    footer a { color: #888; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="inner">
+      <a href="index.html" class="logo">コナモン</a>
+      <ul class="nav-links">
+        <li><a href="index.html">ホーム</a></li>
+        <li><a href="privacy.html">プライバシーポリシー</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="content">
+    <h1>サポート</h1>
+    <p class="subtitle">コナモンに関するお問い合わせ・よくあるご質問</p>
+
+    <h2>お問い合わせ</h2>
+    <p>不具合の報告、機能のご要望、その他のお問い合わせは下記メールアドレスまでご連絡ください。</p>
+    <div class="contact-box">
+      <p>メール</p>
+      <a class="email" href="mailto:support@konamon.app">support@konamon.app</a>
+    </div>
+    <p>お問い合わせの際は、以下の情報を添えていただけるとスムーズに対応できます。</p>
+    <ul>
+      <li>お使いのiPhoneまたはiPadの機種名</li>
+      <li>iOSのバージョン</li>
+      <li>アプリのバージョン</li>
+      <li>問題の詳細（発生する操作手順など）</li>
+    </ul>
+
+    <h2>よくあるご質問</h2>
+
+    <div class="faq-item">
+      <h3>Q. バーコードを読み取っても薬品名が表示されません</h3>
+      <p>A. アプリ内データベースに未登録のバーコードの場合、薬品名の入力画面が表示されます。薬品名を入力して登録すると、次回以降は自動で表示されます。</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Q. カメラのピントが合いません</h3>
+      <p>A. カメラ画面をタップすると、その位置にピントを合わせることができます。秤量の数字が読みにくい場合にお試しください。</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Q. 印刷ができません</h3>
+      <p>A. 印刷にはAirPrint対応のプリンターが必要です。お使いのプリンターがAirPrintに対応しているか、また同じWi-Fiネットワークに接続されているかご確認ください。</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Q. 履歴が消えてしまいました</h3>
+      <p>A. スキャン履歴は7日間保持された後、自動的に削除されます。必要な記録は印刷して保管してください。</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Q. プレミアムを購入したのに反映されません</h3>
+      <p>A. 設定画面の「購入を復元」ボタンをタップしてください。Apple IDでのサインイン状態もご確認ください。</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Q. データはクラウドに保存されますか？</h3>
+      <p>A. いいえ。すべてのデータ（薬品登録、撮影写真、履歴）はお使いのデバイス内にのみ保存されます。外部サーバーへの送信は一切行いません。詳しくは<a href="privacy.html">プライバシーポリシー</a>をご覧ください。</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Q. アプリを削除するとデータはどうなりますか？</h3>
+      <p>A. アプリを削除すると、登録した薬品データ・撮影写真・履歴はすべて完全に消去されます。再インストール後の復元はできません。</p>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">コナモン</div>
+      <p>
+        <a href="index.html">ホーム</a> ・ <a href="privacy.html">プライバシーポリシー</a> ・ <a href="support.html">サポート</a>
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

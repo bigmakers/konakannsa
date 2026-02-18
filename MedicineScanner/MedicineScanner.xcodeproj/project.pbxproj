@@ -14,6 +14,13 @@
 		A1000005 /* MedicineService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000005 /* MedicineService.swift */; };
 		A1000006 /* PrintHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000006 /* PrintHelper.swift */; };
 		A1000007 /* BatchConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000008 /* BatchConfirmationView.swift */; };
+		A1000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000009 /* Assets.xcassets */; };
+		A1000010 /* MedicineListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000012 /* MedicineListView.swift */; };
+		A1000011 /* HistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000013 /* HistoryStore.swift */; };
+		A1000012 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000014 /* HistoryView.swift */; };
+		A1000013 /* ReceiptPrinterService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000015 /* ReceiptPrinterService.swift */; };
+		A1000014 /* StoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000016 /* StoreManager.swift */; };
+		A1000015 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000017 /* PaywallView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,7 +32,14 @@
 		A2000006 /* PrintHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrintHelper.swift; sourceTree = "<group>"; };
 		A2000007 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A2000008 /* BatchConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchConfirmationView.swift; sourceTree = "<group>"; };
+		A2000009 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A2000010 /* MedicineScanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MedicineScanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A2000012 /* MedicineListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicineListView.swift; sourceTree = "<group>"; };
+		A2000013 /* HistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryStore.swift; sourceTree = "<group>"; };
+		A2000014 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		A2000015 /* ReceiptPrinterService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptPrinterService.swift; sourceTree = "<group>"; };
+		A2000016 /* StoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreManager.swift; sourceTree = "<group>"; };
+		A2000017 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,6 +66,7 @@
 			children = (
 				A2000001 /* MedicineScannerApp.swift */,
 				A2000007 /* Info.plist */,
+				A2000009 /* Assets.xcassets */,
 				A4000003 /* Views */,
 				A4000004 /* ViewModels */,
 				A4000005 /* Services */,
@@ -66,6 +81,9 @@
 				A2000002 /* ScannerView.swift */,
 				A2000003 /* ConfirmationView.swift */,
 				A2000008 /* BatchConfirmationView.swift */,
+				A2000012 /* MedicineListView.swift */,
+				A2000014 /* HistoryView.swift */,
+				A2000017 /* PaywallView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -82,6 +100,9 @@
 			isa = PBXGroup;
 			children = (
 				A2000005 /* MedicineService.swift */,
+				A2000013 /* HistoryStore.swift */,
+				A2000015 /* ReceiptPrinterService.swift */,
+				A2000016 /* StoreManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -161,6 +182,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1000008 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -178,6 +200,12 @@
 				A1000005 /* MedicineService.swift in Sources */,
 				A1000006 /* PrintHelper.swift in Sources */,
 				A1000007 /* BatchConfirmationView.swift in Sources */,
+				A1000010 /* MedicineListView.swift in Sources */,
+				A1000011 /* HistoryStore.swift in Sources */,
+				A1000012 /* HistoryView.swift in Sources */,
+				A1000013 /* ReceiptPrinterService.swift in Sources */,
+				A1000014 /* StoreManager.swift in Sources */,
+				A1000015 /* PaywallView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -310,7 +338,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MedicineScanner/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera to scan medicine barcodes and capture photos.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "医薬品のバーコードスキャンと写真撮影のためにカメラを使用します。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -321,7 +349,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.MedicineScanner;
+				PRODUCT_BUNDLE_IDENTIFIER = com.konamon.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -338,7 +366,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MedicineScanner/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera to scan medicine barcodes and capture photos.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "医薬品のバーコードスキャンと写真撮影のためにカメラを使用します。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -349,7 +377,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.MedicineScanner;
+				PRODUCT_BUNDLE_IDENTIFIER = com.konamon.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;

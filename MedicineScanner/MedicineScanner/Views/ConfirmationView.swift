@@ -7,6 +7,9 @@ struct ConfirmationView: View {
     let photo: UIImage
     let medicineName: String
 
+    /// Binding to the weight value (manual input).
+    @Binding var weight: String
+
     /// Whether monochrome (B&W high-contrast) mode is active.
     var isMonochrome: Bool = false
 
@@ -15,6 +18,9 @@ struct ConfirmationView: View {
 
     /// Called when the user taps "リストに追加して次へ".
     var onAddToList: (() -> Void)?
+
+    /// Called when the user taps "再撮影".
+    var onRetake: (() -> Void)?
 
     /// Called after the user finishes (or cancels) the print flow so
     /// the parent can reset the scanner.
@@ -25,69 +31,164 @@ struct ConfirmationView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(spacing: 20) {
-            Text(medicineName)
-                .font(.title2.bold())
-                .multilineTextAlignment(.center)
+        ScrollView {
+            VStack(spacing: 16) {
+                Text(medicineName)
+                    .font(.title3.bold())
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                // Photo (left) + Numpad (right) side by side
+                HStack(alignment: .top, spacing: 12) {
+                    // Photo + retake button
+                    ZStack(alignment: .bottomTrailing) {
+                        Image(uiImage: photo)
+                            .resizable()
+                            .scaledToFit()
+                            .saturation(isMonochrome ? 0 : 1)
+                            .contrast(isMonochrome ? 1.3 : 1)
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .shadow(radius: 4)
+
+                        Button {
+                            if let onRetake {
+                                dismiss()
+                                onRetake()
+                            }
+                        } label: {
+                            Label("再撮影", systemImage: "camera.fill")
+                                .font(.caption.bold())
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 5)
+                                .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 4))
+                                .foregroundStyle(.white)
+                        }
+                        .padding(6)
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    // Weight display + numpad
+                    VStack(spacing: 8) {
+                        // Weight display
+                        HStack(spacing: 4) {
+                            Image(systemName: "scalemass.fill")
+                                .font(.title3)
+                                .foregroundStyle(.secondary)
+                            Text(weight.isEmpty ? "0" : weight)
+                                .font(.system(size: 32, weight: .bold, design: .rounded).monospacedDigit())
+                                .foregroundStyle(weight.isEmpty ? .secondary : .primary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.6)
+                            Text("g")
+                                .font(.title3)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        // Numpad grid (4 rows x 3 columns)
+                        let keys = [
+                            ["7","8","9"],
+                            ["4","5","6"],
+                            ["1","2","3"],
+                            [".","0","⌫"],
+                        ]
+                        VStack(spacing: 4) {
+                            ForEach(keys, id: \.self) { row in
+                                HStack(spacing: 4) {
+                                    ForEach(row, id: \.self) { key in
+                                        Button {
+                                            if key == "⌫" {
+                                                if !weight.isEmpty { weight.removeLast() }
+                                            } else {
+                                                tapKey(key)
+                                            }
+                                        } label: {
+                                            Text(key)
+                                                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                                                .frame(maxWidth: .infinity)
+                                                .frame(height: 44)
+                                                .background(
+                                                    key == "⌫"
+                                                        ? Color(.systemGray4)
+                                                        : Color(.systemGray5),
+                                                    in: RoundedRectangle(cornerRadius: 4)
+                                                )
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                            }
+                        }
+
+                        // Clear button
+                        Button {
+                            weight = ""
+                        } label: {
+                            Text("クリア")
+                                .font(.caption.bold())
+                                .foregroundStyle(.red)
+                        }
+                    }
+                    .frame(width: 160)
+                }
                 .padding(.horizontal)
 
-            Image(uiImage: photo)
-                .resizable()
-                .scaledToFit()
-                .frame(maxHeight: 340)
-                .saturation(isMonochrome ? 0 : 1)
-                .contrast(isMonochrome ? 1.3 : 1)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .shadow(radius: 4)
-                .padding(.horizontal)
+                Spacer().frame(height: 8)
 
-            Spacer()
+                // Add to batch list button
+                if let onAddToList {
+                    Button {
+                        dismiss()
+                        onAddToList()
+                    } label: {
+                        Label(
+                            batchCount > 0
+                                ? "リストに追加して次へ（\(batchCount)件登録済み）"
+                                : "リストに追加して次へ",
+                            systemImage: "plus.rectangle.on.rectangle"
+                        )
+                        .font(.subheadline.bold())
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(isMonochrome ? Color.black : Color.green)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                    }
+                    .padding(.horizontal, 24)
+                }
 
-            // Add to batch list button
-            if let onAddToList {
+                // Single-item print button
+                Button {
+                    printCombinedLayout()
+                } label: {
+                    Label("この1件を印刷", systemImage: "printer.fill")
+                        .font(.subheadline.bold())
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(isMonochrome ? Color.black : Color.accentColor)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
+                .padding(.horizontal, 24)
+                .disabled(isPrinting)
+
+                // Back to scanner
                 Button {
                     dismiss()
-                    onAddToList()
+                    onDone()
                 } label: {
-                    Label(
-                        batchCount > 0
-                            ? "リストに追加して次へ（\(batchCount)件登録済み）"
-                            : "リストに追加して次へ",
-                        systemImage: "plus.rectangle.on.rectangle"
-                    )
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(isMonochrome ? Color.black : Color.green)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    Label("追加せずにスキャナーに戻る", systemImage: "barcode.viewfinder")
+                        .font(.subheadline.bold())
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color(.systemGray5))
+                        .foregroundStyle(.primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
                 }
-                .padding(.horizontal, 40)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 20)
             }
-
-            // Single-item print button
-            Button {
-                printCombinedLayout()
-            } label: {
-                Label("この1件を印刷", systemImage: "printer.fill")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(isMonochrome ? Color.black : Color.accentColor)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-            }
-            .padding(.horizontal, 40)
-            .disabled(isPrinting)
-
-            Button("スキャナーに戻る") {
-                dismiss()
-                onDone()
-            }
-            .font(.subheadline)
-            .padding(.bottom, 8)
+            .padding(.top, 20)
         }
-        .padding(.top, 20)
         .navigationTitle("確認")
         .navigationBarTitleDisplayMode(.inline)
         .alert("印刷エラー", isPresented: .init(
@@ -100,15 +201,39 @@ struct ConfirmationView: View {
         }
     }
 
+    // MARK: - Number Input
+
+    private func tapKey(_ key: String) {
+        if key == "." {
+            if weight.contains(".") { return }
+            if weight.isEmpty { weight = "0" }
+        }
+        weight.append(key)
+    }
+
     // MARK: - Printing
 
     private func printCombinedLayout() {
         isPrinting = true
 
-        guard let printableImage = PrintHelper.compositeImage(
+        // Save first to get scanID
+        let scanID = HistoryStore.save(
+            barcode: "",
             medicineName: medicineName,
-            photo: photo,
-            layout: .a4,
+            weight: weight,
+            photo: photo
+        )
+
+        var item = ScannedItem(
+            barcode: "",
+            medicineName: medicineName,
+            weight: weight,
+            photo: photo
+        )
+        item.scanID = scanID
+
+        guard let printableImage = PrintHelper.compositeBatchImage(
+            items: [item],
             monochrome: isMonochrome
         ) else {
             printError = "印刷用レイアウトの生成に失敗しました。"
@@ -143,8 +268,10 @@ struct ConfirmationView: View {
         ConfirmationView(
             photo: UIImage(systemName: "pill.fill")!,
             medicineName: "ロキソニンS 12錠",
+            weight: .constant("12.5"),
             batchCount: 2,
-            onAddToList: {}
+            onAddToList: {},
+            onRetake: {}
         ) {}
     }
 }
