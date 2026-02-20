@@ -544,6 +544,7 @@ struct SettingsSheet: View {
     @AppStorage("isMonochrome") private var isMonochrome = false
     @Environment(\.dismiss) private var dismiss
     @State private var showManual = false
+    @State private var showPaywall = false
 
     var body: some View {
         NavigationStack {
@@ -586,7 +587,7 @@ struct SettingsSheet: View {
                                 .foregroundStyle(.secondary)
                         }
                         Button("プレミアムにアップグレード") {
-                            store.showPaywall = true
+                            showPaywall = true
                         }
                     }
                     Button("購入を復元") {
@@ -597,7 +598,7 @@ struct SettingsSheet: View {
 
                 Section("寄付") {
                     Button("開発を応援する") {
-                        store.showPaywall = true
+                        showPaywall = true
                     }
                 }
             }
@@ -610,6 +611,9 @@ struct SettingsSheet: View {
             }
             .sheet(isPresented: $showManual) {
                 ManualSheet()
+            }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView(store: store)
             }
         }
         .presentationDetents([.medium, .large])
