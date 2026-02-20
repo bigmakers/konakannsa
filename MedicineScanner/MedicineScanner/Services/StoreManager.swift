@@ -36,6 +36,7 @@ final class StoreManager: ObservableObject {
     func loadProducts() async {
         guard products.isEmpty else { return }
         isLoadingProducts = true
+        purchaseError = nil
         defer { isLoadingProducts = false }
         do {
             let ids: Set<String> = [
