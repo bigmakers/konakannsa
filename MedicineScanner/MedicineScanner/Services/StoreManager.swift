@@ -16,6 +16,7 @@ final class StoreManager: ObservableObject {
     @Published var isPremium = false
     @Published var products: [Product] = []
     @Published var purchaseError: String?
+    @Published var isLoadingProducts = false
     /// Shared flag to present PaywallView from anywhere in the app.
     @Published var showPaywall = false
 
@@ -33,6 +34,9 @@ final class StoreManager: ObservableObject {
     // MARK: - Load Products
 
     func loadProducts() async {
+        guard products.isEmpty else { return }
+        isLoadingProducts = true
+        defer { isLoadingProducts = false }
         do {
             let ids: Set<String> = [
                 Self.premiumID,

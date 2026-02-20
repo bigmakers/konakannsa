@@ -37,35 +37,54 @@ struct PaywallView: View {
                 // Products
                 ScrollView {
                     VStack(spacing: 12) {
-                        // Premium
-                        if let premium = store.products.first(where: { $0.id == StoreManager.premiumID }) {
-                            ProductButton(
-                                product: premium,
-                                label: "プレミアム（無制限）",
-                                icon: "star.fill",
-                                accent: .primary
-                            ) {
-                                Task { await store.purchase(premium) }
+                        if store.isLoadingProducts {
+                            ProgressView("商品情報を読み込み中...")
+                                .padding(.vertical, 40)
+                        } else if store.products.isEmpty {
+                            VStack(spacing: 12) {
+                                Image(systemName: "exclamationmark.triangle")
+                                    .font(.largeTitle)
+                                    .foregroundStyle(.secondary)
+                                Text("商品情報を取得できませんでした")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                Button("再読み込み") {
+                                    Task { await store.loadProducts() }
+                                }
+                                .buttonStyle(.bordered)
                             }
-                        }
+                            .padding(.vertical, 40)
+                        } else {
+                            // Premium
+                            if let premium = store.products.first(where: { $0.id == StoreManager.premiumID }) {
+                                ProductButton(
+                                    product: premium,
+                                    label: "プレミアム（無制限）",
+                                    icon: "star.fill",
+                                    accent: .primary
+                                ) {
+                                    Task { await store.purchase(premium) }
+                                }
+                            }
 
-                        Divider().padding(.vertical, 8)
+                            Divider().padding(.vertical, 8)
 
-                        Text("開発を応援する")
-                            .font(.caption.bold())
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 24)
+                            Text("開発を応援する")
+                                .font(.caption.bold())
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 24)
 
-                        // Donations
-                        ForEach(store.products.filter { $0.id != StoreManager.premiumID }, id: \.id) { product in
-                            ProductButton(
-                                product: product,
-                                label: "寄付",
-                                icon: "heart.fill",
-                                accent: .orange
-                            ) {
-                                Task { await store.purchase(product) }
+                            // Donations
+                            ForEach(store.products.filter { $0.id != StoreManager.premiumID }, id: \.id) { product in
+                                ProductButton(
+                                    product: product,
+                                    label: "寄付",
+                                    icon: "heart.fill",
+                                    accent: .orange
+                                ) {
+                                    Task { await store.purchase(product) }
+                                }
                             }
                         }
 
