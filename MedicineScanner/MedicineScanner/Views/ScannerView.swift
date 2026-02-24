@@ -596,11 +596,6 @@ struct SettingsSheet: View {
                     .foregroundStyle(.secondary)
                 }
 
-                Section("寄付") {
-                    Button("開発を応援する") {
-                        showPaywall = true
-                    }
-                }
             }
             .navigationTitle("設定")
             .navigationBarTitleDisplayMode(.inline)

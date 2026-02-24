@@ -1,7 +1,7 @@
 import StoreKit
 import SwiftUI
 
-/// Purchase screen for premium unlock and donations.
+/// Purchase screen for premium unlock (one-time or yearly subscription).
 struct PaywallView: View {
     @ObservedObject var store: StoreManager
     @Environment(\.dismiss) private var dismiss
@@ -55,35 +55,16 @@ struct PaywallView: View {
                             }
                             .padding(.vertical, 40)
                         } else {
-                            // Premium
-                            if let premium = store.products.first(where: { $0.id == StoreManager.premiumID }) {
+                            // Yearly subscription
+                            if let yearly = store.products.first(where: { $0.id == StoreManager.yearlyID }) {
                                 ProductButton(
-                                    product: premium,
-                                    label: "プレミアム（無制限）",
-                                    icon: "star.fill",
-                                    accent: .primary
-                                ) {
-                                    Task { await store.purchase(premium) }
-                                }
-                            }
-
-                            Divider().padding(.vertical, 8)
-
-                            Text("開発を応援する")
-                                .font(.caption.bold())
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, 24)
-
-                            // Donations
-                            ForEach(store.products.filter { $0.id != StoreManager.premiumID }, id: \.id) { product in
-                                ProductButton(
-                                    product: product,
-                                    label: "寄付",
-                                    icon: "heart.fill",
+                                    product: yearly,
+                                    label: "プレミアム年額プラン",
+                                    sublabel: "自動更新・いつでも解約可能",
+                                    icon: "arrow.clockwise.circle.fill",
                                     accent: .orange
                                 ) {
-                                    Task { await store.purchase(product) }
+                                    Task { await store.purchase(yearly) }
                                 }
                             }
                         }
@@ -126,6 +107,7 @@ struct PaywallView: View {
 private struct ProductButton: View {
     let product: Product
     let label: String
+    let sublabel: String
     let icon: String
     let accent: Color
     let action: () -> Void
@@ -140,7 +122,7 @@ private struct ProductButton: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(label)
                         .font(.subheadline.bold())
-                    Text(product.displayName)
+                    Text(sublabel)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

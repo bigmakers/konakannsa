@@ -1,14 +1,13 @@
 import StoreKit
 
-/// Manages in-app purchases: premium unlock (5+ medicines) and donations.
+/// Manages in-app purchases: premium unlock (one-time) and yearly subscription.
 @MainActor
 final class StoreManager: ObservableObject {
     static let shared = StoreManager()
 
     // Product identifiers
-    static let premiumID = "com.konamon.app.premium"
-    static let donation200ID = "com.konamon.app.donation.200"
-    static let donation500ID = "com.konamon.app.donation.500"
+    static let premiumID = "com.konamon.app.premium"        // 既存ユーザー向け（レガシー）
+    static let yearlyID  = "com.konamon.app.premium.yearly"
 
     /// Free tier medicine registration limit.
     static let freeLimit = 5
@@ -41,8 +40,7 @@ final class StoreManager: ObservableObject {
         do {
             let ids: Set<String> = [
                 Self.premiumID,
-                Self.donation200ID,
-                Self.donation500ID,
+                Self.yearlyID,
             ]
             products = try await Product.products(for: ids)
                 .sorted { $0.price < $1.price }
@@ -85,7 +83,8 @@ final class StoreManager: ObservableObject {
     func checkPurchaseStatus() async {
         for await result in Transaction.currentEntitlements {
             if case .verified(let transaction) = result {
-                if transaction.productID == Self.premiumID {
+                if transaction.productID == Self.premiumID ||
+                   transaction.productID == Self.yearlyID {
                     isPremium = true
                     return
                 }
