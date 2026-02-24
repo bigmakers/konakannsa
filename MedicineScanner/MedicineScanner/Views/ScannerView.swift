@@ -544,7 +544,6 @@ struct SettingsSheet: View {
     @AppStorage("isMonochrome") private var isMonochrome = false
     @Environment(\.dismiss) private var dismiss
     @State private var showManual = false
-    @State private var showPaywall = false
 
     var body: some View {
         NavigationStack {
@@ -577,19 +576,6 @@ struct SettingsSheet: View {
                             .foregroundStyle(store.isPremium ? .green : .secondary)
                             .font(.subheadline.bold())
                     }
-                    if !store.isPremium {
-                        let count = MedicineService.userEntries().count
-                        HStack {
-                            Text("登録数")
-                            Spacer()
-                            Text("\(count) / \(StoreManager.freeLimit)")
-                                .font(.subheadline.monospacedDigit())
-                                .foregroundStyle(.secondary)
-                        }
-                        Button("プレミアムにアップグレード") {
-                            showPaywall = true
-                        }
-                    }
                     Button("購入を復元") {
                         Task { await store.restore() }
                     }
@@ -606,9 +592,6 @@ struct SettingsSheet: View {
             }
             .sheet(isPresented: $showManual) {
                 ManualSheet()
-            }
-            .sheet(isPresented: $showPaywall) {
-                PaywallView(store: store)
             }
         }
         .presentationDetents([.medium, .large])
