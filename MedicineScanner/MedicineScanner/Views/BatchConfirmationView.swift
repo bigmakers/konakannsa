@@ -193,11 +193,10 @@ struct BatchConfirmationView: View {
         isPrinting = true
 
         // Save to history first so each item gets a scanID
-        HistoryStore.saveBatch(viewModel.scannedItems)
+        let scanIDs = HistoryStore.saveBatch(viewModel.scannedItems)
 
-        // Load recent records to get the scanIDs just assigned
-        let allRecords = HistoryStore.loadAll()
-        let recentRecords = Array(allRecords.prefix(viewModel.scannedItems.count))
+        // Resolve exactly the records that were just saved, preserving scan order.
+        let recentRecords = scanIDs.compactMap { HistoryStore.find(byScanID: $0) }
 
         guard let journalImage = PrintHelper.journalImage(records: recentRecords, layout: .a4) else {
             printError = "ジャーナル印刷用レイアウトの生成に失敗しました。"
