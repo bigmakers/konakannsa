@@ -217,14 +217,18 @@ struct ConfirmationView: View {
         isPrinting = true
 
         // Save first to get scanID
-        let scanID = HistoryStore.save(
+        guard let scanID = HistoryStore.save(
             barcode: "",
             medicineName: medicineName,
             weight: weight,
             photo: photo
-        )
+        ) else {
+            printError = "履歴の保存に失敗しました。"
+            isPrinting = false
+            return
+        }
 
-        let item = ScannedItem(
+        var item = ScannedItem(
             barcode: "",
             medicineName: medicineName,
             weight: weight,

@@ -30,6 +30,7 @@ struct HistoryRecord: Codable, Identifiable {
 /// Manages scan-history persistence (JSON + photo files).
 /// Records older than 7 days are automatically purged on load.
 enum HistoryStore {
+    private static let ioQueue = DispatchQueue(label: "HistoryStore.ioQueue")
 
     // MARK: - Directories
 
@@ -54,79 +55,84 @@ enum HistoryStore {
 
     /// Loads all records, purging entries older than 7 days.
     static func loadAll() -> [HistoryRecord] {
-        ensureDirectories()
-        var records = readJSON()
-        let cutoff = Calendar.current.date(byAdding: .day, value: -retentionDays, to: Date()) ?? Date()
-        let expired = records.filter { $0.date < cutoff }
-        if !expired.isEmpty {
-            for record in expired {
-                try? FileManager.default.removeItem(at: record.photoURL)
+        ioQueue.sync {
+            ensureDirectories()
+            var records = readJSON()
+            let cutoff = Calendar.current.date(byAdding: .day, value: -retentionDays, to: Date()) ?? Date()
+            let expired = records.filter { $0.date < cutoff }
+            if !expired.isEmpty {
+                for record in expired {
+                    try? FileManager.default.removeItem(at: record.photoURL)
+                }
+                records.removeAll { $0.date < cutoff }
+                writeJSON(records)
             }
-            records.removeAll { $0.date < cutoff }
-            writeJSON(records)
+            return records.sorted { $0.date > $1.date }
         }
-        return records.sorted { $0.date > $1.date }
     }
 
     /// Saves a single scanned item to history and returns the assigned scanID.
     @discardableResult
-    static func save(barcode: String, medicineName: String, weight: String, photo: UIImage) -> Int {
-        ensureDirectories()
-        let id = UUID().uuidString
-        let fileName = "\(id).jpg"
-        let fileURL = photosDirectory.appendingPathComponent(fileName)
+    static func save(barcode: String, medicineName: String, weight: String, photo: UIImage) -> Int? {
+        ioQueue.sync {
+            ensureDirectories()
+            let id = UUID().uuidString
+            let fileName = "\(id).jpg"
+            let fileURL = photosDirectory.appendingPathComponent(fileName)
 
-        // Save photo as JPEG
-        if let data = photo.jpegData(compressionQuality: 0.7) {
-            try? data.write(to: fileURL)
+            // Save photo as JPEG. Skip record creation if the file can't be written.
+            guard let data = photo.jpegData(compressionQuality: 0.7),
+                  (try? data.write(to: fileURL)) != nil else {
+                return nil
+            }
+
+            var records = readJSON()
+            let nextID = nextScanID(from: records)
+
+            let record = HistoryRecord(
+                id: id,
+                barcode: barcode,
+                medicineName: medicineName,
+                weight: weight,
+                photoFileName: fileName,
+                date: Date(),
+                scanID: nextID
+            )
+
+            records.append(record)
+            writeJSON(records)
+            return nextID
         }
-
-        let nextID = nextScanID()
-
-        let record = HistoryRecord(
-            id: id,
-            barcode: barcode,
-            medicineName: medicineName,
-            weight: weight,
-            photoFileName: fileName,
-            date: Date(),
-            scanID: nextID
-        )
-
-        var records = readJSON()
-        records.append(record)
-        writeJSON(records)
-        return nextID
     }
 
     /// Saves multiple items at once and returns assigned scanIDs in order.
     static func saveBatch(_ items: [ScannedItem]) -> [Int] {
-        var ids: [Int] = []
-        for item in items {
-            let scanID = save(barcode: item.barcode, medicineName: item.medicineName, weight: item.weight, photo: item.photo)
-            ids.append(scanID)
+        items.compactMap {
+            save(barcode: $0.barcode, medicineName: $0.medicineName, weight: $0.weight, photo: $0.photo)
         }
-        return ids
     }
 
     /// Finds a record by its scanID.
     static func find(byScanID scanID: Int) -> HistoryRecord? {
-        let records = readJSON()
-        return records.first { $0.scanID == scanID }
+        loadAll().first { $0.scanID == scanID }
     }
 
     /// Deletes a single history record.
     static func delete(_ record: HistoryRecord) {
-        try? FileManager.default.removeItem(at: record.photoURL)
-        var records = readJSON()
-        records.removeAll { $0.id == record.id }
-        writeJSON(records)
+        ioQueue.sync {
+            try? FileManager.default.removeItem(at: record.photoURL)
+            var records = readJSON()
+            records.removeAll { $0.id == record.id }
+            writeJSON(records)
+        }
     }
 
     /// Deletes all history records.
     static func deleteAll() {
-        try? FileManager.default.removeItem(at: baseDirectory)
-        ensureDirectories()
+        ioQueue.sync {
+            try? FileManager.default.removeItem(at: baseDirectory)
+            ensureDirectories()
+        }
     }
 
     // MARK: - Private Helpers
@@ -148,8 +154,7 @@ enum HistoryStore {
         try? data.write(to: jsonURL, options: .atomic)
     }
 
-    private static func nextScanID() -> Int {
-        let records = readJSON()
+    private static func nextScanID(from records: [HistoryRecord]) -> Int {
         let maxID = records.map(\.scanID).max() ?? 0
         return maxID + 1
     }
