@@ -42,7 +42,7 @@ struct MedicineService {
 
     /// A single medicine entry for list display.
     struct MedicineEntry: Identifiable {
-        let id = UUID()
+        var id: String { barcode }
         let barcode: String
         let name: String
         let isBuiltIn: Bool

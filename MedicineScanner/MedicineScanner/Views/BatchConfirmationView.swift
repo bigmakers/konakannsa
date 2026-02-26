@@ -150,6 +150,11 @@ struct BatchConfirmationView: View {
 
         // Save to history first to get scanIDs
         let scanIDs = HistoryStore.saveBatch(viewModel.scannedItems)
+        guard !scanIDs.isEmpty else {
+            printError = "履歴の保存に失敗しました。"
+            isPrinting = false
+            return
+        }
 
         // Attach scanIDs to items for rendering
         var itemsWithIDs = viewModel.scannedItems
@@ -193,7 +198,12 @@ struct BatchConfirmationView: View {
         isPrinting = true
 
         // Save to history first so each item gets a scanID
-        HistoryStore.saveBatch(viewModel.scannedItems)
+        let scanIDs = HistoryStore.saveBatch(viewModel.scannedItems)
+        guard !scanIDs.isEmpty else {
+            printError = "履歴の保存に失敗しました。"
+            isPrinting = false
+            return
+        }
 
         // Load recent records to get the scanIDs just assigned
         let allRecords = HistoryStore.loadAll()
@@ -227,7 +237,11 @@ struct BatchConfirmationView: View {
     // MARK: - Save Without Printing
 
     private func saveWithoutPrinting() {
-        HistoryStore.saveBatch(viewModel.scannedItems)
+        let scanIDs = HistoryStore.saveBatch(viewModel.scannedItems)
+        guard !scanIDs.isEmpty else {
+            printError = "履歴の保存に失敗しました。"
+            return
+        }
         viewModel.resetAll()
         dismiss()
     }
