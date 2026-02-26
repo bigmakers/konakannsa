@@ -182,12 +182,16 @@ struct BatchConfirmationView: View {
         // Save to history first to get scanIDs
         let scanIDs = HistoryStore.saveBatch(viewModel.scannedItems)
 
+        guard scanIDs.count == viewModel.scannedItems.count else {
+            printError = "一部保存に失敗しました（\(scanIDs.count)/\(viewModel.scannedItems.count)件）。"
+            isPrinting = false
+            return
+        }
+
         // Attach scanIDs to items for rendering
         var itemsWithIDs = viewModel.scannedItems
         for i in itemsWithIDs.indices {
-            if i < scanIDs.count {
-                itemsWithIDs[i].scanID = scanIDs[i]
-            }
+            itemsWithIDs[i].scanID = scanIDs[i]
         }
 
         guard let printableImage = PrintHelper.compositeBatchImage(
@@ -225,11 +229,22 @@ struct BatchConfirmationView: View {
         lastPrintMethod = .journal
 
         // Save to history first so each item gets a scanID
-        HistoryStore.saveBatch(viewModel.scannedItems)
+        let scanIDs = HistoryStore.saveBatch(viewModel.scannedItems)
 
-        // Load recent records to get the scanIDs just assigned
-        let allRecords = HistoryStore.loadAll()
-        let recentRecords = Array(allRecords.prefix(viewModel.scannedItems.count))
+        guard scanIDs.count == viewModel.scannedItems.count else {
+            printError = "一部保存に失敗しました（\(scanIDs.count)/\(viewModel.scannedItems.count)件）。"
+            isPrinting = false
+            return
+        }
+
+        // Retrieve records by scanID to build the batch safely
+        let recentRecords = scanIDs.compactMap { HistoryStore.find(byScanID: $0) }
+
+        guard recentRecords.count == scanIDs.count else {
+            printError = "保存済みデータの取得に失敗しました。"
+            isPrinting = false
+            return
+        }
 
         guard let journalImage = PrintHelper.journalImage(records: recentRecords, layout: .a4) else {
             printError = "ジャーナル印刷用レイアウトの生成に失敗しました。"
@@ -259,7 +274,11 @@ struct BatchConfirmationView: View {
     // MARK: - Save Without Printing
 
     private func saveWithoutPrinting() {
-        HistoryStore.saveBatch(viewModel.scannedItems)
+        let scanIDs = HistoryStore.saveBatch(viewModel.scannedItems)
+        guard scanIDs.count == viewModel.scannedItems.count else {
+            printError = "一部保存に失敗しました（\(scanIDs.count)/\(viewModel.scannedItems.count)件）。"
+            return
+        }
         viewModel.resetAll()
         dismiss()
     }
