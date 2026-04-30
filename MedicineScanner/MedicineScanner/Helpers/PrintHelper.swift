@@ -63,10 +63,10 @@ enum PrintHelper {
         return compositeBatchImage(items: [item], monochrome: monochrome)
     }
 
-    // MARK: - Batch Composite Rendering (4 columns × 5 rows, column-major)
+    // MARK: - Batch Composite Rendering (4 columns × 4 rows, column-major)
 
     /// Renders multiple scanned items into a single A4 `UIImage` in a 4-column,
-    /// 5-row grid. Each cell: medicine name → ID → weight → photo (top-to-bottom).
+    /// 4-row grid. Each cell: medicine name → ID → weight → photo (top-to-bottom).
     /// Items fill vertically first (column by column).
     static func compositeBatchImage(items: [ScannedItem], monochrome: Bool = false) -> UIImage? {
         guard !items.isEmpty else { return nil }
@@ -76,7 +76,7 @@ enum PrintHelper {
         let headerHeight: CGFloat = 36
         let cellGap: CGFloat = 6
         let columns = 4
-        let maxRows = 5
+        let maxRows = 4
 
         let renderer = UIGraphicsImageRenderer(size: pageSize)
 
