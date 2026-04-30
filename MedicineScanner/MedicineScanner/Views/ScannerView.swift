@@ -35,15 +35,15 @@ struct ScannerView: View {
                             Button {
                                 viewModel.showBatchConfirmation = true
                             } label: {
-                                HStack(spacing: 4) {
+                                HStack(spacing: 6) {
                                     Image(systemName: "list.bullet.rectangle.portrait")
-                                        .font(.caption)
+                                        .font(.subheadline)
                                     Text("\(viewModel.scannedItems.count)件")
-                                        .font(.caption.bold())
+                                        .font(.subheadline.bold())
                                 }
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 4))
+                                .padding(.horizontal, 14)
+                                .frame(minHeight: 44)
+                                .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 6))
                                 .foregroundStyle(.white)
                             }
                         }
@@ -134,18 +134,20 @@ struct ScannerView: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 4) {
                         NavigationLink {
                             HistoryView()
                         } label: {
                             Label("履歴", systemImage: "clock.arrow.circlepath")
-                                .font(.caption)
+                                .font(.subheadline)
+                                .frame(minWidth: 44, minHeight: 44)
                         }
                         Button {
                             showSettings = true
                         } label: {
                             Label("設定", systemImage: "gearshape")
-                                .font(.caption)
+                                .font(.subheadline)
+                                .frame(minWidth: 44, minHeight: 44)
                         }
                     }
                 }
@@ -154,7 +156,8 @@ struct ScannerView: View {
                         MedicineListView(store: store)
                     } label: {
                         Label("医薬品", systemImage: "list.bullet.clipboard")
-                            .font(.caption)
+                            .font(.subheadline)
+                            .frame(minWidth: 44, minHeight: 44)
                     }
                 }
             }

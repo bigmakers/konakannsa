@@ -5,6 +5,7 @@ import SwiftUI
 struct PaywallView: View {
     @ObservedObject var store: StoreManager
     @Environment(\.dismiss) private var dismiss
+    @State private var isLoadingProducts = true
 
     var body: some View {
         NavigationStack {
@@ -37,6 +38,17 @@ struct PaywallView: View {
                 // Products
                 ScrollView {
                     VStack(spacing: 12) {
+                        if isLoadingProducts && store.products.isEmpty {
+                            VStack(spacing: 12) {
+                                ProgressView()
+                                Text("商品情報を読み込み中…")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 40)
+                        }
+
                         // Premium
                         if let premium = store.products.first(where: { $0.id == StoreManager.premiumID }) {
                             ProductButton(
@@ -70,12 +82,15 @@ struct PaywallView: View {
                         }
 
                         // Restore
-                        Button("購入を復元") {
+                        Button {
                             Task { await store.restore() }
+                        } label: {
+                            Text("購入を復元")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .frame(minHeight: 44)
                         }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 16)
+                        .padding(.top, 8)
                     }
                     .padding(.top, 16)
                     .padding(.bottom, 32)
@@ -98,7 +113,11 @@ struct PaywallView: View {
             }
         }
         .presentationDetents([.medium, .large])
-        .task { await store.loadProducts() }
+        .task {
+            isLoadingProducts = true
+            await store.loadProducts()
+            isLoadingProducts = false
+        }
     }
 }
 

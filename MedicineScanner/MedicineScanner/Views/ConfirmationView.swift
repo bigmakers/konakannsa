@@ -57,13 +57,13 @@ struct ConfirmationView: View {
                             }
                         } label: {
                             Label("再撮影", systemImage: "camera.fill")
-                                .font(.caption.bold())
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 5)
-                                .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 4))
+                                .font(.subheadline.bold())
+                                .padding(.horizontal, 12)
+                                .frame(minHeight: 44)
+                                .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 6))
                                 .foregroundStyle(.white)
                         }
-                        .padding(6)
+                        .padding(8)
                     }
                     .frame(maxWidth: .infinity)
 
@@ -124,8 +124,9 @@ struct ConfirmationView: View {
                             weight = ""
                         } label: {
                             Text("クリア")
-                                .font(.caption.bold())
+                                .font(.subheadline.bold())
                                 .foregroundStyle(.red)
+                                .frame(maxWidth: .infinity, minHeight: 36)
                         }
                     }
                     .frame(width: 160)
@@ -160,13 +161,21 @@ struct ConfirmationView: View {
                 Button {
                     printCombinedLayout()
                 } label: {
-                    Label("この1件を印刷", systemImage: "printer.fill")
-                        .font(.subheadline.bold())
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(isMonochrome ? Color.black : Color.accentColor)
-                        .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                    HStack(spacing: 8) {
+                        if isPrinting {
+                            ProgressView()
+                                .tint(.white)
+                            Text("印刷を準備中…")
+                        } else {
+                            Label("この1件を印刷", systemImage: "printer.fill")
+                        }
+                    }
+                    .font(.subheadline.bold())
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(isMonochrome ? Color.black : Color.accentColor)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
                 }
                 .padding(.horizontal, 24)
                 .disabled(isPrinting)

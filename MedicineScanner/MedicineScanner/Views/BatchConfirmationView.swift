@@ -31,13 +31,16 @@ struct BatchConfirmationView: View {
                                 .contrast(isMonochrome ? 1.3 : 1)
                                 .clipShape(RoundedRectangle(cornerRadius: 4))
 
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: 6) {
                                 Text(item.medicineName)
                                     .font(.body.bold())
                                 if !item.weight.isEmpty {
                                     Text("\(item.weight)g")
-                                        .font(.subheadline.monospacedDigit())
-                                        .foregroundStyle(.orange)
+                                        .font(.subheadline.monospacedDigit().bold())
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 3)
+                                        .background(Color.orange, in: Capsule())
                                 }
                                 Text(item.barcode)
                                     .font(.caption.monospacedDigit())
@@ -62,10 +65,18 @@ struct BatchConfirmationView: View {
                 Button {
                     showPrintChoice = true
                 } label: {
-                    Label(
-                        "まとめて印刷（\(viewModel.scannedItems.count)件）",
-                        systemImage: "printer.fill"
-                    )
+                    HStack(spacing: 8) {
+                        if isPrinting {
+                            ProgressView()
+                                .tint(.white)
+                            Text("印刷を準備中…")
+                        } else {
+                            Label(
+                                "まとめて印刷（\(viewModel.scannedItems.count)件）",
+                                systemImage: "printer.fill"
+                            )
+                        }
+                    }
                     .font(.subheadline.bold())
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
@@ -104,12 +115,16 @@ struct BatchConfirmationView: View {
                 .padding(.horizontal, 40)
 
                 if !viewModel.scannedItems.isEmpty {
-                    Button("リストをクリア") {
+                    Button {
                         viewModel.resetAll()
                         dismiss()
+                    } label: {
+                        Text("リストをクリア")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.red)
+                            .frame(maxWidth: .infinity, minHeight: 36)
                     }
-                    .font(.caption.bold())
-                    .foregroundStyle(.red)
+                    .padding(.horizontal, 40)
                 }
 
                 Spacer().frame(height: 8)

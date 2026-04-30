@@ -104,20 +104,45 @@ struct HistoryView: View {
                 .padding(.bottom, 12)
             }
         }
+        .overlay {
+            if isPrinting {
+                ZStack {
+                    Color.black.opacity(0.3).ignoresSafeArea()
+                    VStack(spacing: 12) {
+                        ProgressView()
+                            .controlSize(.large)
+                            .tint(.white)
+                        Text("印刷を準備中…")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.white)
+                    }
+                    .padding(28)
+                    .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 12))
+                }
+                .transition(.opacity)
+            }
+        }
         .navigationTitle("印刷履歴")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                HStack(spacing: 12) {
+                HStack(spacing: 4) {
                     if !records.isEmpty {
                         Button {
                             printJournal(layout: selectedJournalLayout)
                         } label: {
                             Image(systemName: "doc.text")
+                                .font(.subheadline)
+                                .frame(minWidth: 44, minHeight: 44)
                         }
+                        .disabled(isPrinting)
 
-                        Button("全削除", role: .destructive) {
+                        Button(role: .destructive) {
                             showDeleteAllAlert = true
+                        } label: {
+                            Text("全削除")
+                                .font(.subheadline)
+                                .frame(minHeight: 44)
                         }
                         .foregroundStyle(.red)
                     }
@@ -294,17 +319,23 @@ private struct HistoryRow: View {
                     }
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(record.medicineName)
                     .font(.body.bold())
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     Text("#\(record.scanIDString)")
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.blue)
+                        .font(.caption.monospacedDigit().bold())
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.blue, in: Capsule())
                     if !record.weight.isEmpty {
                         Text("\(record.weight)g")
-                            .font(.subheadline.monospacedDigit())
-                            .foregroundStyle(.orange)
+                            .font(.subheadline.monospacedDigit().bold())
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Color.orange, in: Capsule())
                     }
                 }
                 Text(Self.timeFormatter.string(from: record.date))
@@ -341,14 +372,20 @@ struct PhotoDetailSheet: View {
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
 
-                    HStack(spacing: 16) {
+                    HStack(spacing: 8) {
                         Label("#\(record.scanIDString)", systemImage: "number")
-                            .font(.subheadline.monospacedDigit())
-                            .foregroundStyle(.blue)
+                            .font(.subheadline.monospacedDigit().bold())
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color.blue, in: Capsule())
                         if !record.weight.isEmpty {
                             Label("\(record.weight)g", systemImage: "scalemass.fill")
-                                .font(.subheadline.monospacedDigit())
-                                .foregroundStyle(.orange)
+                                .font(.subheadline.monospacedDigit().bold())
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(Color.orange, in: Capsule())
                         }
                     }
 
